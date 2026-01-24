@@ -1,4 +1,4 @@
-javascript:(function(){
+(function(){
   if(window.Sniffer && Sniffer.active) return;
 
   window.Sniffer = {
@@ -163,3 +163,4 @@ javascript:(function(){
   document.body.appendChild(panel);
   icon.onclick = Sniffer.togglePanel;
 })();
+
