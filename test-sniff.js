@@ -1,1 +1,205 @@
-(function(){if(window._sniffActive)return;window._sniffActive=true;var foundUrls=new Set(),terminalFont="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",greenGlow="#00ff41%22,adRemoverInterval=null;/*%20---%20STYLE%20---%20*/var%20style=document.createElement('style');style.textContent=%60#hsc::-webkit-scrollbar{width:4px}#hsc::-webkit-scrollbar-thumb{background:#444;border-radius:10px}.h-card{margin-bottom:8px;padding:10px;background:#1e1e1e;border:1px%20solid%20#333;border-radius:6px;animation:fadeIn%20.2s}.h-btn{transition:.2s;cursor:pointer;user-select:none}.h-btn:active{transform:scale(.95);opacity:.7}@keyframes%20fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}%60;document.head.appendChild(style);/*%20---%20ICON%20---%20*/var%20icon=document.createElement('div');icon.innerHTML='%E2%9A%A1';icon.style.cssText=%60all:initial;font-family:${terminalFont};position:fixed;bottom:80px;right:20px;width:55px;height:55px;background:#222;color:${greenGlow};border:2px%20solid%20${greenGlow};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:2147483647;box-shadow:0%204px%2015px%20rgba(0,0,0,.5);cursor:move;touch-action:none;%60;document.body.appendChild(icon);/*%20---%20PANEL%20---%20*/var%20panel=document.createElement('div');panel.style.cssText=%60all:initial;font-family:${terminalFont};position:fixed;bottom:0;left:0;width:100%;height:60%;background:#0a0a0a;color:#eee;z-index:2147483646;display:none;flex-direction:column;border-top:1px%20solid%20#333%60;var%20header=document.createElement('div');header.style.cssText='display:flex;background:#1a1a1a;border-bottom:1px%20solid%20#333;overflow-x:auto;flex-shrink:0';function%20createTab(name,fn,color){var%20t=document.createElement('div');t.innerText=name;t.style.cssText=%60padding:14px%2018px;font-size:12px;font-weight:bold;cursor:pointer;color:${color||'#ccc'};border-right:1px%20solid%20#333;white-space:nowrap%60;t.className='h-btn';t.onclick=e=%3E{e.stopPropagation();fn()};return%20t;}var%20content=document.createElement('div');content.id='hsc';content.style.cssText='flex:1;overflow-y:auto;padding:15px;box-sizing:border-box';/*%20---%20DRAG%20&%20CLICK%20---%20*/function%20makeDraggable(el){let%20sx,sy,moved=false,start;function%20down(e){moved=false;start=Date.now();let%20t=e.touches?e.touches[0]:e;sx=t.clientX-el.offsetLeft;sy=t.clientY-el.offsetTop;window.addEventListener(e.touches?'touchmove':'mousemove',move,{passive:false});window.addEventListener(e.touches?'touchend':'mouseup',up);}function%20move(e){let%20t=e.touches?e.touches[0]:e;let%20x=t.clientX-sx,y=t.clientY-sy;if(Math.abs(x-el.offsetLeft)%3E5||Math.abs(y-el.offsetTop)%3E5){moved=true;el.style.left=x+'px';el.style.top=y+'px';el.style.bottom='auto';el.style.right='auto';}if(moved&&e.cancelable)e.preventDefault();}function%20up(){window.removeEventListener('mousemove',move);window.removeEventListener('touchmove',move);window.removeEventListener('mouseup',up);window.removeEventListener('touchend',up);if(!moved&&Date.now()-start%3C300)togglePanel();else%20if(moved){let%20mid=innerWidth/2;el.style.transition='left%20.3s';el.style.left=(parseInt(el.style.left)%3Cmid)?'10px':(innerWidth-65)+'px';setTimeout(()=%3Eel.style.transition='',300);}}el.addEventListener('mousedown',down);el.addEventListener('touchstart',down,{passive:false});}/*%20---%20CORE%20---%20*/function%20logUrl(url,type,spec){if(!url||url.startsWith('blob:'))return;let%20f=url.replace(/\\u002f/g,'/').replace(/\\/g,'');if(f.includes('hls.mlive'))f=f.replace('hls.mlive','hdlf.mlive');if(f.includes('player.stream1689.com/p2p/')){f='https://master.streamhls.com/hls/'+f.split('/p2p/')[1].split('?')[0]+'/master.m3u8';type='S1689_CONV';}if(spec)f=url.replace('webrtc://','https://').split('?')[0]+'.m3u8'+(url.split('?')[1]?'?'+url.split('?')[1]:'');if(foundUrls.has(f))return;foundUrls.add(f);var%20c=document.createElement('div');c.className='h-card';c.innerHTML=%60%3Cdiv%20style=%22font-size:10px;color:${greenGlow};margin-bottom:5px%22%3E[${type}]%3C/div%3E%3Cdiv%20style=%22font-size:12px;word-break:break-all;margin-bottom:8px%22%3E${f}%3C/div%3E%3Cdiv%20style=%22display:flex;gap:10px%22%3E%3Cbutton%20class=%22h-btn%22%20style=%22all:initial;font-family:inherit;background:#333;color:#eee;padding:8px;flex:1;border-radius:4px;font-size:11px%22%3ECOPY%3C/button%3E%3Cbutton%20class=%22h-btn%22%20style=%22all:initial;font-family:inherit;background:${greenGlow};color:#000;padding:8px;flex:1;border-radius:4px;font-size:11px;font-weight:bold%22%3EOPEN%3C/button%3E%3C/div%3E%60;c.querySelectorAll('button')[0].onclick=()=%3E{navigator.clipboard.writeText(f);alert('%E0%B8%84%E0%B8%B1%E0%B8%94%E0%B8%A5%E0%B8%AD%E0%B8%81%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7!')};c.querySelectorAll('button')[1].onclick=()=%3Ewindow.open(f,'_blank');content.prepend(c);}function%20scanVid(){document.querySelectorAll('video,source,iframe').forEach(e=%3E{let%20s=e.src||e.getAttribute('src');if(s&&s.startsWith('http'))logUrl(s,e.tagName);});document.querySelectorAll('script').forEach(sc=%3E{let%20m=sc.textContent.match(/(https?:\/\/[^%22'%20]+\.m3u8[^%22'%20]*)/);if(m)logUrl(m[1],'JS_M3U8');let%20r=sc.textContent.match(/%22roomId%22:%22(\d{5,})%22/);if(r)logUrl(r[1],'TIKTOK_ROOM');let%20p=sc.textContent.match(/%22hls_pull_url%22:%22(.*?)%22/);if(p)logUrl(p[1],'TIKTOK_LIVE');});}function%20toggleAds(){if(adRemoverInterval){clearInterval(adRemoverInterval);adRemoverInterval=null;alert('%E0%B8%9B%E0%B8%B4%E0%B8%94%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A%20Bypass%20Ads');}else{adRemoverInterval=setInterval(()=%3E{var%20v=document.querySelector('video');if(v){document.querySelectorAll('[class*=%22skip%22],.ytp-ad-skip-button').forEach(b=%3Eb.click());if(v.duration%3C300)v.currentTime=v.duration;}},500);alert('%E0%B9%80%E0%B8%9B%E0%B8%B4%E0%B8%94%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A%20Bypass%20Ads');}}function%20togglePanel(){var%20show=panel.style.display==='none';panel.style.display=show?'flex':'none';icon.style.opacity=show?'0.4':'1';if(show)scanVid();}/*%20---%20NETWORK%20---%20*/var%20oX=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){if(typeof%20u==='string'&&(u.includes('.m3u8')||u.includes('.mp4')))logUrl(u,'XHR');return%20oX.apply(this,arguments);};var%20oS=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.send=function(b){try{let%20j=JSON.parse(b);if(j?.data?.[0]?.str_stream_url)logUrl(j.data[0].str_stream_url,'QCLOUD',true);}catch(e){}return%20oS.apply(this,arguments);};window.fetch=(f=%3Efunction(){return%20f.apply(this,arguments).then(r=%3E{if(r.url.match(/\.m3u8|\.mp4/))logUrl(r.url,'FETCH');return%20r;});})(window.fetch);/*%20---%20IMG%20TAB%20---%20*/function%20openImages(){var%20imgs=[...document.images].map(i=%3Ei.src).filter(s=%3Es.startsWith('http'));var%20w=window.open('','_blank');w.document.write(%60%3Cbody%20style=%22background:#000;color:${greenGlow};font-family:sans-serif;padding:20px%22%3E%3Ch2%3EIMAGES%20(${imgs.length})%3C/h2%3E%3Cdiv%20style=%22display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px%22%3E${imgs.map(s=%3E%60%3Cdiv%20style=%22border:1px%20solid%20#333;padding:5px%22%3E%3Cimg%20src=%22${s}%22%20style=%22width:100%;height:100px;object-fit:cover%22%3E%3Ca%20href=%22${s}%22%20download%20style=%22color:#fff;font-size:12px;display:block;text-align:center%22%3ESave%3C/a%3E%3C/div%3E%60).join('')}%3C/div%3E%3C/body%3E%60);}/*%20---%20UI%20---%20*/header.appendChild(createTab('VIDEO',scanVid));header.appendChild(createTab('ADS',toggleAds,greenGlow));header.appendChild(createTab('IMG',openImages));header.appendChild(createTab('CLEAR',()=%3E{foundUrls.clear();content.innerHTML=''}));header.appendChild(createTab('CLOSE',togglePanel,'#ff4444'));panel.appendChild(header);panel.appendChild(content);document.body.appendChild(panel);makeDraggable(icon);})();
+(function() {
+    if (window._sniffActive) return;
+    window._sniffActive = true;
+
+    var foundUrls = new Set(),
+        terminalFont = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",
+        greenGlow = "#00ff41",
+        adRemoverInterval = null;
+
+    // --- 1. STYLES (ผสมผสานความสวยงามและ Scannability) ---
+    var style = document.createElement('style');
+    style.textContent = `
+        #hsc::-webkit-scrollbar{width:4px}
+        #hsc::-webkit-scrollbar-thumb{background:#444;border-radius:10px}
+        .h-card{margin-bottom:8px;padding:12px;background:#1a1a1a;border-left:3px solid ${greenGlow};border-radius:4px;animation:fadeIn .2s}
+        .h-btn{transition:.2s;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:center}
+        .h-btn:active{transform:scale(.95);opacity:.7}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+    `;
+    document.head.appendChild(style);
+
+    // --- 2. ICON (⚡) ---
+    var icon = document.createElement('div');
+    icon.id = 'hacker-icon';
+    icon.innerHTML = '⚡';
+    icon.style.cssText = `all:initial;font-family:${terminalFont};position:fixed;bottom:80px;right:20px;width:55px;height:55px;background:#000;color:${greenGlow};border:2px solid ${greenGlow};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:2147483647;box-shadow:0 0 15px rgba(0,255,65,0.3);cursor:move;touch-action:none;`;
+    document.body.appendChild(icon);
+
+    // --- 3. PANEL & TABS ---
+    var panel = document.createElement('div');
+    panel.style.cssText = `all:initial;font-family:${terminalFont};position:fixed;bottom:0;left:0;width:100%;height:60%;background:#0a0a0a;color:#eee;z-index:2147483646;display:none;flex-direction:column;border-top:1px solid #333;box-shadow:0 -5px 25px rgba(0,0,0,0.8);`;
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;background:#111;border-bottom:1px solid #333;overflow-x:auto;flex-shrink:0';
+
+    function createTab(name, fn, color) {
+        var t = document.createElement('div');
+        t.innerText = name;
+        t.style.cssText = `padding:15px 20px;font-size:12px;font-weight:bold;color:${color||'#ccc'};border-right:1px solid #222;white-space:nowrap;`;
+        t.className = 'h-btn';
+        t.onclick = (e) => { e.stopPropagation(); fn(); };
+        return t;
+    }
+
+    var content = document.getElementById('hsc') || document.createElement('div');
+    content.id = 'hsc';
+    content.style.cssText = 'flex:1;overflow-y:auto;padding:15px;box-sizing:border-box;display:block;width:100%;';
+
+    // --- 4. CORE FUNCTIONS (รักษา Logic จาก code39.txt ทั้งหมด) ---
+    function logUrl(url, type, isSpecial = false) {
+        if (!url || url.startsWith('blob:')) return;
+        let fUrl = url.replace(/\\u002f/g, '/').replace(/\\/g, '');
+        
+        [span_1](start_span)// MLIVE & Stream1689 Logic[span_1](end_span)
+        if (fUrl.includes('hls.mlive.in.th')) fUrl = fUrl.replace('hls.mlive.in.th', 'hdlf.mlive.in.th');
+        if (fUrl.includes('player.stream1689.com/p2p/')) {
+            let id = fUrl.split('/p2p/')[1].split('?')[0];
+            fUrl = 'https://master.streamhls.com/hls/' + id + '/master.m3u8';
+            type = 'CONVERT_S1689';
+        }
+        if (isSpecial) fUrl = url.replace('webrtc://', 'https://').split('?')[0] + '.m3u8' + (url.split('?')[1] ? '?' + url.split('?')[1] : '');
+        
+        if (foundUrls.has(fUrl)) return;
+        foundUrls.add(fUrl);
+
+        var card = document.createElement('div');
+        card.className = 'h-card';
+        card.innerHTML = `
+            <div style="font-size:10px;color:${greenGlow};opacity:0.7;margin-bottom:4px;">> ACCESS_${type}</div>
+            <div style="font-size:12px;word-break:break-all;margin-bottom:10px;color:#fff;">${fUrl}</div>
+            <div style="display:flex;gap:8px;">
+                <button class="h-btn" style="all:initial;background:#333;color:#eee;padding:8px;flex:1;border-radius:4px;font-size:11px;text-align:center;">COPY</button>
+                <button class="h-btn" style="all:initial;background:${greenGlow};color:#000;padding:8px;flex:1;border-radius:4px;font-size:11px;font-weight:bold;text-align:center;">OPEN</button>
+            </div>
+        `;
+        card.querySelectorAll('button')[0].onclick = () => {
+            navigator.clipboard.writeText(fUrl);
+            alert('คัดลอกแล้ว!');
+        };
+        card.querySelectorAll('button')[1].onclick = () => window.open(fUrl, '_blank');
+        content.prepend(card);
+    }
+
+    function scanVid() {
+        // วิดีโอทั่วไป
+        document.querySelectorAll('video,source,iframe').forEach(el => {
+            let s = el.src || el.getAttribute('src');
+            if (s && s.startsWith('http')) logUrl(s, el.tagName);
+        });
+        [span_2](start_span)// TikTok & Scripts[span_2](end_span)
+        document.querySelectorAll('script').forEach(sc => {
+            const m3 = sc.textContent.match(/(https?:\/\/[^"']+\.m3u8[^"']*)/);
+            if (m3) logUrl(m3[1].replace(/\\/g, ''), 'TIKTOK_M3U8');
+            const rm = sc.textContent.match(/"roomId":"(\d{5,})"/);
+            if (rm) logUrl(rm[1], 'TIKTOK_ROOM');
+            const p = sc.textContent.match(/"hls_pull_url":"(.*?)"/);
+            if (p) logUrl(p[1], 'TIKTOK_PULL');
+        });
+    }
+
+    function toggleAds() {
+        if (adRemoverInterval) {
+            clearInterval(adRemoverInterval);
+            adRemoverInterval = null;
+            alert('ปิดระบบ Bypass Ads');
+        } else {
+            adRemoverInterval = setInterval(() => {
+                var v = document.querySelector('video');
+                if (v) {
+                    [span_3](start_span)// กดปุ่มข้าม[span_3](end_span)
+                    document.querySelectorAll('[class*="skip"], [id*="skip"], .ytp-ad-skip-button, .atp-ad-skip-button').forEach(b => b.click());
+                    // เร่งโฆษณาที่สั้นกว่า 5 นาที
+                    if (!v.paused && v.duration < 300) v.currentTime = v.duration;
+                }
+            }, 500);
+            alert('เปิดระบบ Bypass Ads (Auto Skip)');
+        }
+    }
+
+    function imgScan() {
+        var imgs = [...document.images].map(i => i.src).filter(s => s && s.startsWith('http'));
+        if (!imgs.length) return;
+        var w = window.open('', '_blank');
+        w.document.write(`<body style="background:#000;color:${greenGlow};font-family:sans-serif;padding:20px;"><h3>IMAGES (${imgs.length})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;">${imgs.map(s => `<div style="border:1px solid #333;padding:5px;"><img src="${s}" style="width:100%;height:100px;object-fit:cover;"><a href="${s}" download style="color:${greenGlow};display:block;text-align:center;font-size:10px;margin-top:5px;text-decoration:none;">[SAVE]</a></div>`).join('')}</div></body>`);
+    }
+
+    function togglePanel() {
+        var show = panel.style.display === 'none';
+        panel.style.display = show ? 'flex' : 'none';
+        icon.style.opacity = show ? '0.4' : '1';
+        if (show) scanVid();
+    }
+
+    // --- 5. DRAG & NETWORK (รักษาฟังก์ชันดั้งเดิม) ---
+    function makeDraggable(el) {
+        let sx, sy, moved = false, start;
+        function down(e) {
+            moved = false; start = Date.now();
+            let t = e.touches ? e.touches[0] : e;
+            sx = t.clientX - el.offsetLeft; sy = t.clientY - el.offsetTop;
+            window.addEventListener(e.touches ? 'touchmove' : 'mousemove', move, {passive: false});
+            window.addEventListener(e.touches ? 'touchend' : 'mouseup', up);
+        }
+        function move(e) {
+            let t = e.touches ? e.touches[0] : e;
+            let x = t.clientX - sx, y = t.clientY - sy;
+            if (Math.abs(x - el.offsetLeft) > 5 || Math.abs(y - el.offsetTop) > 5) {
+                moved = true;
+                el.style.left = x + 'px'; el.style.top = y + 'px';
+                el.style.bottom = el.style.right = 'auto';
+            }
+            if (moved && e.cancelable) e.preventDefault();
+        }
+        function up() {
+            window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move);
+            window.removeEventListener('mouseup', up); window.removeEventListener('touchend', up);
+            if (!moved && (Date.now() - start < 300)) togglePanel();
+            else if (moved) {
+                let mid = innerWidth / 2;
+                el.style.transition = 'left .3s';
+                el.style.left = (parseInt(el.style.left) < mid) ? '10px' : (innerWidth - 65) + 'px';
+                setTimeout(() => el.style.transition = '', 300);
+            }
+        }
+        el.addEventListener('mousedown', down);
+        el.addEventListener('touchstart', down, {passive: false});
+    }
+
+    [span_4](start_span)// Network Interceptors (code39.txt)[span_4](end_span)
+    var oX = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(m, u) {
+        if (typeof u === 'string' && (u.includes('.m3u8') || u.includes('.mp4') || u.includes('stream1689'))) logUrl(u, 'XHR');
+        return oX.apply(this, arguments);
+    };
+
+    var oS = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function(b) {
+        try {
+            let j = JSON.parse(b);
+            if (j?.data?.[0]?.str_stream_url) logUrl(j.data[0].str_stream_url, 'QCLOUD', true);
+        } catch (e) {}
+        return oS.apply(this, arguments);
+    };
+
+    window.fetch = (f => function() {
+        return f.apply(this, arguments).then(r => {
+            if (r.url.match(/\.m3u8|\.mp4/)) logUrl(r.url, 'FETCH');
+            return r;
+        });
+    })(window.fetch);
+
+    // --- 6. ASSEMBLE UI ---
+    header.appendChild(createTab('VIDEO', scanVid));
+    header.appendChild(createTab('ADS', toggleAds, greenGlow));
+    header.appendChild(createTab('IMG', imgScan));
+    header.appendChild(createTab('CLEAR', () => { foundUrls.clear(); content.innerHTML = ''; }));
+    header.appendChild(createTab('CLOSE', togglePanel, '#ff4444'));
+
+    panel.appendChild(header);
+    panel.appendChild(content);
+    document.body.appendChild(panel);
+    makeDraggable(icon);
+
+})();
+ 
