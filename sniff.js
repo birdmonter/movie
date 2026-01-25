@@ -1,1 +1,428 @@
-(function(){if(window._sniffActive)return;window._sniffActive=true;var foundUrls=new Set(),terminalFont="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",greenGlow="#00ff41%22,adRemoverInterval=null;/*%20---%20STYLE%20---%20*/var%20style=document.createElement('style');style.textContent=%60#hsc::-webkit-scrollbar{width:4px}#hsc::-webkit-scrollbar-thumb{background:#444;border-radius:10px}.h-card{margin-bottom:8px;padding:10px;background:#1e1e1e;border:1px%20solid%20#333;border-radius:6px;animation:fadeIn%20.2s}.h-btn{transition:.2s;cursor:pointer;user-select:none}.h-btn:active{transform:scale(.95);opacity:.7}@keyframes%20fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}%60;document.head.appendChild(style);/*%20---%20ICON%20---%20*/var%20icon=document.createElement('div');icon.innerHTML='%E2%9A%A1';icon.style.cssText=%60all:initial;font-family:${terminalFont};position:fixed;bottom:80px;right:20px;width:55px;height:55px;background:#222;color:${greenGlow};border:2px%20solid%20${greenGlow};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:2147483647;box-shadow:0%204px%2015px%20rgba(0,0,0,.5);cursor:pointer;touch-action:none;%60;document.body.appendChild(icon);/*%20---%20PANEL%20---%20*/var%20panel=document.createElement('div');panel.style.cssText=%60all:initial;font-family:${terminalFont};position:fixed;bottom:0;left:0;width:100%;height:60%;background:#0a0a0a;color:#eee;z-index:2147483646;display:none;flex-direction:column;border-top:1px%20solid%20#333%60;var%20header=document.createElement('div');header.style.cssText='display:flex;background:#1a1a1a;border-bottom:1px%20solid%20#333;overflow-x:auto;flex-shrink:0';function%20createTab(name,fn,color){%20%20var%20t=document.createElement('div');%20%20t.innerText=name;%20%20t.style.cssText=%60%20%20%20%20padding:14px%2018px;%20%20%20%20font-size:12px;%20%20%20%20font-weight:bold;%20%20%20%20cursor:pointer;%20%20%20%20color:${color||'#ccc'};%20%20%20%20border-right:1px%20solid%20#333;%20%20%20%20white-space:nowrap%20%20%60;%20%20t.className='h-btn';%20%20t.onclick=e=%3E{e.stopPropagation();fn()};%20%20return%20t;}var%20content=document.createElement('div');content.id='hsc';content.style.cssText='flex:1;overflow-y:auto;padding:15px;box-sizing:border-box';/*%20---%20CORE%20---%20*/function%20logUrl(url,type,spec){%20%20if(!url||url.startsWith('blob:'))return;%20%20let%20f=url.replace(/\\u002f/g,'/').replace(/\\/g,'');%20%20if(f.includes('hls.mlive'))f=f.replace('hls.mlive','hdlf.mlive');%20%20if(f.includes('player.stream1689.com/p2p/')){%20%20%20%20f='https://master.streamhls.com/hls/'+f.split('/p2p/')[1].split('?')[0]+'/master.m3u8';%20%20%20%20type='S1689_CONV';%20%20}%20%20if(spec)f=url.replace('webrtc://','https://').split('?')[0]+'.m3u8'+(url.split('?')[1]?'?'+url.split('?')[1]:'');%20%20if(foundUrls.has(f))return;%20%20foundUrls.add(f);%20%20var%20c=document.createElement('div');%20%20c.className='h-card';%20%20c.innerHTML=%60%20%20%20%20%3Cdiv%20style=%22font-size:10px;color:${greenGlow};margin-bottom:5px%22%3E[${type}]%3C/div%3E%20%20%20%20%3Cdiv%20style=%22font-size:12px;word-break:break-all;margin-bottom:8px%22%3E${f}%3C/div%3E%20%20%20%20%3Cdiv%20style=%22display:flex;gap:10px%22%3E%20%20%20%20%20%20%3Cbutton%20class=%22h-btn%22%20style=%22all:initial;font-family:inherit;background:#333;color:#eee;padding:8px;flex:1;border-radius:4px;font-size:11px%22%3ECOPY%3C/button%3E%20%20%20%20%20%20%3Cbutton%20class=%22h-btn%22%20style=%22all:initial;font-family:inherit;background:${greenGlow};color:#000;padding:8px;flex:1;border-radius:4px;font-size:11px;font-weight:bold%22%3EOPEN%3C/button%3E%20%20%20%20%3C/div%3E%20%20%60;%20%20c.querySelectorAll('button')[0].onclick=()=%3E{navigator.clipboard.writeText(f);alert('%E0%B8%84%E0%B8%B1%E0%B8%94%E0%B8%A5%E0%B8%AD%E0%B8%81%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7!')};%20%20c.querySelectorAll('button')[1].onclick=()=%3Ewindow.open(f,'_blank');%20%20content.prepend(c);}function%20scanVid(){%20%20document.querySelectorAll('video,source,iframe').forEach(e=%3E{%20%20%20%20let%20s=e.src||e.getAttribute('src');%20%20%20%20if(s&&s.startsWith('http'))logUrl(s,e.tagName);%20%20});%20%20document.querySelectorAll('script').forEach(sc=%3E{%20%20%20%20let%20m=sc.textContent.match(/(https?:\/\/[^%22'%20]+\.m3u8[^%22'%20]*)/);%20%20%20%20if(m)logUrl(m[1],'JS_M3U8');%20%20%20%20let%20r=sc.textContent.match(/%22roomId%22:%22(\d{5,})%22/);%20%20%20%20if(r)logUrl(r[1],'TIKTOK_ROOM');%20%20%20%20let%20p=sc.textContent.match(/%22hls_pull_url%22:%22(.*?)%22/);%20%20%20%20if(p)logUrl(p[1],'TIKTOK_LIVE');%20%20});}function%20toggleAds(){%20%20if(adRemoverInterval){%20%20%20%20clearInterval(adRemoverInterval);%20%20%20%20adRemoverInterval=null;%20%20%20%20alert('%E0%B8%9B%E0%B8%B4%E0%B8%94%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A%20Bypass%20Ads');%20%20}else{%20%20%20%20adRemoverInterval=setInterval(()=%3E{%20%20%20%20%20%20var%20v=document.querySelector('video');%20%20%20%20%20%20if(v){%20%20%20%20%20%20%20%20document.querySelectorAll('[class*=%22skip%22],.ytp-ad-skip-button').forEach(b=%3Eb.click());%20%20%20%20%20%20%20%20if(v.duration%3C300)v.currentTime=v.duration;%20%20%20%20%20%20}%20%20%20%20},500);%20%20%20%20alert('%E0%B9%80%E0%B8%9B%E0%B8%B4%E0%B8%94%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A%20Bypass%20Ads');%20%20}}function%20togglePanel(){%20%20var%20show=panel.style.display==='none';%20%20panel.style.display=show?'flex':'none';%20%20icon.style.opacity=show?'0.4':'1';%20%20if(show)scanVid();}/*%20---%20NETWORK%20---%20*/var%20oX=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){%20%20if(typeof%20u==='string'&&(u.includes('.m3u8')||u.includes('.mp4')))%20%20%20%20logUrl(u,'XHR');%20%20return%20oX.apply(this,arguments);};var%20oS=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.send=function(b){%20%20try{%20%20%20%20let%20j=JSON.parse(b);%20%20%20%20if(j?.data?.[0]?.str_stream_url)%20%20%20%20%20%20logUrl(j.data[0].str_stream_url,'QCLOUD',true);%20%20}catch(e){}%20%20return%20oS.apply(this,arguments);};window.fetch=(f=%3Efunction(){%20%20return%20f.apply(this,arguments).then(r=%3E{%20%20%20%20if(r.url.match(/\.m3u8|\.mp4/))logUrl(r.url,'FETCH');%20%20%20%20return%20r;%20%20});})(window.fetch);/*%20---%20IMG%20TAB%20---%20*/function%20openImages(){%20%20var%20imgs=[...document.images].map(i=%3Ei.src).filter(s=%3Es.startsWith('http'));%20%20var%20w=window.open('','_blank');%20%20w.document.write(%60%20%20%20%20%3Cbody%20style=%22background:#000;color:${greenGlow};font-family:sans-serif;padding:20px%22%3E%20%20%20%20%3Ch2%3EIMAGES%20(${imgs.length})%3C/h2%3E%20%20%20%20%3Cdiv%20style=%22display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px%22%3E%20%20%20%20${imgs.map(s=%3E%60%20%20%20%20%20%20%3Cdiv%20style=%22border:1px%20solid%20#333;padding:5px%22%3E%20%20%20%20%20%20%20%20%3Cimg%20src=%22${s}%22%20style=%22width:100%;height:auto;object-fit:cover%22%3E%20%20%20%20%20%20%20%20%3Ca%20href=%22${s}%22%20download%20style=%22color:#fff;font-size:12px;display:block;text-align:center%22%3ESave%3C/a%3E%20%20%20%20%20%20%3C/div%3E%60).join('')}%20%20%20%20%3C/div%3E%3C/body%3E%20%20%60);}/*%20---%20UI%20---%20*/header.appendChild(createTab('VIDEO',scanVid));header.appendChild(createTab('ADS',toggleAds,greenGlow));header.appendChild(createTab('IMG',openImages));header.appendChild(createTab('CLEAR',()=%3E{foundUrls.clear();content.innerHTML=''}));header.appendChild(createTab('CLOSE',togglePanel,'#ff4444'));panel.appendChild(header);panel.appendChild(content);document.body.appendChild(panel);/*%20---%20DRAG%20BUTTON%20(FIXED,%20ONLY%20PART%20CHANGED)%20---%20*/function%20makeDraggable(el){%20%20let%20sx=0,sy=0,ox=0,oy=0,moved=false,start=0;%20%20el.addEventListener('pointerdown',e=%3E{%20%20%20%20moved=false;%20%20%20%20start=Date.now();%20%20%20%20el.setPointerCapture(e.pointerId);%20%20%20%20const%20r=el.getBoundingClientRect();%20%20%20%20sx=e.clientX;%20sy=e.clientY;%20%20%20%20ox=r.left;%20oy=r.top;%20%20});%20%20el.addEventListener('pointermove',e=%3E{%20%20%20%20if(!el.hasPointerCapture(e.pointerId))return;%20%20%20%20const%20dx=e.clientX-sx,%20dy=e.clientY-sy;%20%20%20%20if(Math.abs(dx)%3E6||Math.abs(dy)%3E6){%20%20%20%20%20%20moved=true;%20%20%20%20%20%20el.style.left=ox+dx+'px';%20%20%20%20%20%20el.style.top=oy+dy+'px';%20%20%20%20%20%20el.style.right='auto';%20%20%20%20%20%20el.style.bottom='auto';%20%20%20%20}%20%20});%20%20el.addEventListener('pointerup',e=%3E{%20%20%20%20el.releasePointerCapture(e.pointerId);%20%20%20%20if(!moved%20&&%20Date.now()-start%3C300){%20%20%20%20%20%20togglePanel();%20%20%20%20%20%20return;%20%20%20%20}%20%20%20%20const%20mid=innerWidth/2;%20%20%20%20const%20x=parseInt(el.style.left||ox);%20%20%20%20el.style.transition='left%20.25s';%20%20%20%20el.style.left=(x%3Cmid)?'10px':(innerWidth-65)+'px';%20%20%20%20setTimeout(()=%3Eel.style.transition='',300);%20%20});}makeDraggable(icon);})();
+(function() {
+  // ป้องกันการรันซ้ำ
+  if (window._sniffActive) return;
+  window._sniffActive = true;
+
+  // ตัวแปรหลัก
+  const foundUrls = new Set();
+  const terminalFont = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  const greenGlow = "#00ff41";
+  let adRemoverInterval = null;
+
+  // ===============================
+  // STYLE
+  // ===============================
+  const style = document.createElement('style');
+  style.textContent = `
+    #hsc::-webkit-scrollbar { width: 4px; }
+    #hsc::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+    .h-card {
+      margin-bottom: 8px;
+      padding: 10px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      animation: fadeIn 0.2s;
+    }
+    .h-btn {
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .h-btn:hover { opacity: 0.8; }
+    .h-btn:active { transform: scale(0.95); opacity: 0.7; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // ===============================
+  // FLOATING ICON
+  // ===============================
+  const icon = document.createElement('div');
+  icon.innerHTML = '⚡';
+  icon.style.cssText = `
+    all: initial;
+    font-family: ${terminalFont};
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    background: #222;
+    color: ${greenGlow};
+    border: 2px solid ${greenGlow};
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    z-index: 2147483647;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    touch-action: none;
+  `;
+  document.body.appendChild(icon);
+
+  // ===============================
+  // PANEL
+  // ===============================
+  const panel = document.createElement('div');
+  panel.style.cssText = `
+    all: initial;
+    font-family: ${terminalFont};
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60%;
+    background: #0a0a0a;
+    color: #eee;
+    z-index: 2147483646;
+    display: none;
+    flex-direction: column;
+    border-top: 1px solid #333;
+  `;
+
+  // Header Tabs
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    overflow-x: auto;
+    flex-shrink: 0;
+  `;
+
+  function createTab(name, fn, color = '#ccc') {
+    const t = document.createElement('div');
+    t.innerText = name;
+    t.style.cssText = `
+      padding: 14px 18px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      color: ${color};
+      border-right: 1px solid #333;
+      white-space: nowrap;
+    `;
+    t.className = 'h-btn';
+    t.onclick = e => { e.stopPropagation(); fn(); };
+    return t;
+  }
+
+  // Content Area
+  const content = document.createElement('div');
+  content.id = 'hsc';
+  content.style.cssText = `
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    box-sizing: border-box;
+  `;
+
+  // ===============================
+  // CORE FUNCTIONS
+  // ===============================
+  
+  // แปลง URL ให้ถูกต้อง
+  function normalizeUrl(url, type, isWebRTC = false) {
+    if (!url || url.startsWith('blob:')) return null;
+    
+    let fixed = url.replace(/\\u002f/g, '/').replace(/\\/g, '');
+    
+    // MLive fix
+    if (fixed.includes('hls.mlive')) {
+      fixed = fixed.replace('hls.mlive', 'hdlf.mlive');
+    }
+    
+    // Stream1689 converter
+    if (fixed.includes('player.stream1689.com/p2p/')) {
+      const id = fixed.split('/p2p/')[1].split('?')[0];
+      fixed = `https://master.streamhls.com/hls/${id}/master.m3u8`;
+      type = 'S1689_CONV';
+    }
+    
+    // WebRTC to HLS
+    if (isWebRTC && url.startsWith('webrtc://')) {
+      const base = url.replace('webrtc://', 'https://').split('?')[0];
+      const params = url.includes('?') ? '?' + url.split('?')[1] : '';
+      fixed = base + '.m3u8' + params;
+    }
+    
+    return { url: fixed, type };
+  }
+
+  // บันทึก URL ที่พบ
+  function logUrl(url, type, isWebRTC = false) {
+    const normalized = normalizeUrl(url, type, isWebRTC);
+    if (!normalized || foundUrls.has(normalized.url)) return;
+    
+    foundUrls.add(normalized.url);
+    
+    const card = document.createElement('div');
+    card.className = 'h-card';
+    
+    const typeLabel = document.createElement('div');
+    typeLabel.style.cssText = `font-size: 10px; color: ${greenGlow}; margin-bottom: 5px;`;
+    typeLabel.textContent = `[${normalized.type}]`;
+    
+    const urlText = document.createElement('div');
+    urlText.style.cssText = 'font-size: 12px; word-break: break-all; margin-bottom: 8px;';
+    urlText.textContent = normalized.url;
+    
+    const btnContainer = document.createElement('div');
+    btnContainer.style.cssText = 'display: flex; gap: 10px;';
+    
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'h-btn';
+    copyBtn.textContent = 'COPY';
+    copyBtn.style.cssText = `
+      all: initial;
+      font-family: inherit;
+      background: #333;
+      color: #eee;
+      padding: 8px;
+      flex: 1;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      text-align: center;
+    `;
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(normalized.url);
+      copyBtn.textContent = '✓ COPIED';
+      setTimeout(() => copyBtn.textContent = 'COPY', 1500);
+    };
+    
+    const openBtn = document.createElement('button');
+    openBtn.className = 'h-btn';
+    openBtn.textContent = 'OPEN';
+    openBtn.style.cssText = `
+      all: initial;
+      font-family: inherit;
+      background: ${greenGlow};
+      color: #000;
+      padding: 8px;
+      flex: 1;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+    `;
+    openBtn.onclick = () => window.open(normalized.url, '_blank');
+    
+    btnContainer.appendChild(copyBtn);
+    btnContainer.appendChild(openBtn);
+    
+    card.appendChild(typeLabel);
+    card.appendChild(urlText);
+    card.appendChild(btnContainer);
+    
+    content.prepend(card);
+  }
+
+  // สแกนหา Video URLs
+  function scanVideo() {
+    // สแกน video/source/iframe tags
+    document.querySelectorAll('video, source, iframe').forEach(el => {
+      const src = el.src || el.getAttribute('src');
+      if (src && src.startsWith('http')) {
+        logUrl(src, el.tagName);
+      }
+    });
+    
+    // สแกน scripts สำหรับ M3U8
+    document.querySelectorAll('script').forEach(script => {
+      const text = script.textContent;
+      
+      // M3U8 URLs
+      const m3u8Match = text.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/);
+      if (m3u8Match) logUrl(m3u8Match[1], 'JS_M3U8');
+      
+      // TikTok Room ID
+      const roomMatch = text.match(/"roomId":"(\d{5,})"/);
+      if (roomMatch) logUrl(roomMatch[1], 'TIKTOK_ROOM');
+      
+      // TikTok Live HLS
+      const hlsMatch = text.match(/"hls_pull_url":"(.*?)"/);
+      if (hlsMatch) logUrl(hlsMatch[1], 'TIKTOK_LIVE');
+    });
+    
+    if (foundUrls.size === 0) {
+      content.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">ไม่พบ Video URL<br>ลองเล่นวิดีโอก่อน แล้วกด SCAN อีกครั้ง</div>';
+    }
+  }
+
+  // Bypass โฆษณา
+  function toggleAds() {
+    if (adRemoverInterval) {
+      clearInterval(adRemoverInterval);
+      adRemoverInterval = null;
+      alert('ปิดระบบ Bypass Ads');
+    } else {
+      adRemoverInterval = setInterval(() => {
+        const video = document.querySelector('video');
+        if (video) {
+          // คลิกปุ่ม Skip
+          document.querySelectorAll('[class*="skip"], .ytp-ad-skip-button').forEach(btn => btn.click());
+          
+          // ข้ามโฆษณาสั้น
+          if (video.duration < 300) {
+            video.currentTime = video.duration;
+          }
+        }
+      }, 500);
+      alert('เปิดระบบ Bypass Ads');
+    }
+  }
+
+  // เปิด/ปิด Panel
+  function togglePanel() {
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'flex' : 'none';
+    icon.style.opacity = isHidden ? '0.4' : '1';
+    if (isHidden) scanVideo();
+  }
+
+  // แสดงรูปภาพทั้งหมด
+  function openImages() {
+    const imgs = [...document.images]
+      .map(i => i.src)
+      .filter(s => s.startsWith('http'));
+    
+    const w = window.open('', '_blank');
+    w.document.write(`
+      <body style="background:#000; color:${greenGlow}; font-family:sans-serif; padding:20px;">
+        <h2>IMAGES (${imgs.length})</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;">
+          ${imgs.map(src => `
+            <div style="border:1px solid #333; padding:5px;">
+              <img src="${src}" style="width:100%; height:auto; object-fit:cover;">
+              <a href="${src}" download style="color:#fff; font-size:12px; display:block; text-align:center;">Save</a>
+            </div>
+          `).join('')}
+        </div>
+      </body>
+    `);
+  }
+
+  // ===============================
+  // NETWORK INTERCEPT (ปรับปรุง)
+  // ===============================
+  
+  // XMLHttpRequest intercept
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url) {
+    if (typeof url === 'string' && (url.includes('.m3u8') || url.includes('.mp4'))) {
+      logUrl(url, 'XHR');
+    }
+    return originalXHROpen.apply(this, arguments);
+  };
+
+  const originalXHRSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send = function(body) {
+    try {
+      const data = JSON.parse(body);
+      if (data?.data?.[0]?.str_stream_url) {
+        logUrl(data.data[0].str_stream_url, 'QCLOUD', true);
+      }
+    } catch(e) {}
+    return originalXHRSend.apply(this, arguments);
+  };
+
+  // Fetch intercept
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    return originalFetch.apply(this, args).then(response => {
+      if (response.url && response.url.match(/\.m3u8|\.mp4/)) {
+        logUrl(response.url, 'FETCH');
+      }
+      return response;
+    });
+  };
+
+  // ===============================
+  // UI ASSEMBLY
+  // ===============================
+  header.appendChild(createTab('🔍 SCAN', scanVideo));
+  header.appendChild(createTab('🚫 ADS', toggleAds, greenGlow));
+  header.appendChild(createTab('🖼️ IMG', openImages));
+  header.appendChild(createTab('🗑️ CLEAR', () => {
+    foundUrls.clear();
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">ล้างข้อมูลแล้ว</div>';
+  }));
+  header.appendChild(createTab('✕ CLOSE', togglePanel, '#ff4444'));
+
+  panel.appendChild(header);
+  panel.appendChild(content);
+  document.body.appendChild(panel);
+
+  // ===============================
+  // DRAGGABLE ICON
+  // ===============================
+  function makeDraggable(el) {
+    let startX = 0, startY = 0, offsetX = 0, offsetY = 0;
+    let hasMoved = false, startTime = 0;
+
+    el.addEventListener('pointerdown', e => {
+      hasMoved = false;
+      startTime = Date.now();
+      el.setPointerCapture(e.pointerId);
+      
+      const rect = el.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      offsetX = rect.left;
+      offsetY = rect.top;
+    });
+
+    el.addEventListener('pointermove', e => {
+      if (!el.hasPointerCapture(e.pointerId)) return;
+      
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+        hasMoved = true;
+        el.style.left = (offsetX + dx) + 'px';
+        el.style.top = (offsetY + dy) + 'px';
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+      }
+    });
+
+    el.addEventListener('pointerup', e => {
+      el.releasePointerCapture(e.pointerId);
+      
+      // ถ้าไม่ได้ลาก และคลิกเร็ว = เปิด panel
+      if (!hasMoved && Date.now() - startTime < 300) {
+        togglePanel();
+        return;
+      }
+      
+      // Snap to edge
+      const midpoint = window.innerWidth / 2;
+      const currentX = parseInt(el.style.left) || offsetX;
+      
+      el.style.transition = 'left 0.25s ease-out';
+      el.style.left = (currentX < midpoint) ? '10px' : (window.innerWidth - 65) + 'px';
+      
+      setTimeout(() => el.style.transition = '', 300);
+    });
+  }
+
+  makeDraggable(icon);
+
+  // ===============================
+  // CLEANUP
+  // ===============================
+  window.addEventListener('beforeunload', () => {
+    if (adRemoverInterval) clearInterval(adRemoverInterval);
+  });
+
+  console.log('%c⚡ Video Sniffer Active', `color: ${greenGlow}; font-size: 16px; font-weight: bold;`);
+})();
