@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>Flex Image Sender Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #06C755; /* LINE Green */
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--glass-bg);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        h2 { color: #333; text-align: center; margin-bottom: 25px; font-weight: 500; }
+
+        .form-group { margin-bottom: 18px; }
+
+        label { display: block; margin-bottom: 8px; color: #555; font-size: 0.9rem; }
+
+        input[type=text], select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input[type=text]:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(6, 199, 85, 0.1);
+        }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-save { background-color: #333; color: white; }
+        .btn-share { background-color: var(--primary-color); color: white; }
+        .btn-oa { background-color: #007bff; color: white; }
+        .btn-tel { background-color: #ff4757; color: white; }
+
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        
+        /* Preview area */
+        .preview-text {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Flex Image Sender</h2>
+
+    <div class="form-group">
+        <label>URL รูปภาพ (Direct Link)</label>
+        <input type="text" id="linkImg" placeholder="https://example.com/image.jpg">
+    </div>
+
+    <div class="form-group">
+        <label>ลิงก์เมื่อคลิกรูป</label>
+        <input type="text" id="linkTo" placeholder="https://line.me/...">
+    </div>
+
+    <div class="form-group">
+        <label>สัดส่วนภาพ (Aspect Ratio)</label>
+        <select id="lsize">
+            <option value="1:1">1:1 (Square)</option>
+            <option value="1:1.5" selected>1:1.5 (Portrait)</option>
+            <option value="4:5">4:5</option>
+            <option value="16:9">16:9 (Wide)</option>
+            <option value="2:1">2:1</option>
+        </select>
+    </div>
+
+    <div class="btn-stack">
+        <button class="btn-save" onclick="saveData()">💾 บันทึกข้อมูล</button>
+        <button class="btn-share" onclick="shareTargetPicker()">📤 ส่งให้เพื่อน/กลุ่ม</button>
+        <button class="btn-oa" onclick="sendMessageOA()">💬 ส่งเข้าแชทนี้ (OA)</button>
+        <button class="btn-tel" onclick="sendSticker()">⭐ ส่งสติ๊กเกอร์ทดสอบ</button>
+    </div>
+    
+    <p class="preview-text" id="statusTxt">สถานะ: รอการเชื่อมต่อ LIFF...</p>
+</div>
+
+<script>
+    let config = {
+        img: "",
+        url: "",
+        size: "1:1.5"
+    };
+
+    // --- 1. Initial LIFF ---
+    async function main() {
+        try {
+            await liff.init({ liffId: "1654802091-0yd1nOzG" });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('statusTxt').innerText = "สถานะ: เชื่อมต่อ LINE สำเร็จ";
+                // เช็ค Param refer
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('refer')) sendSticker();
+            }
+        } catch (err) {
+            console.error("LIFF Init Error", err);
+        }
+    }
+
+    // --- 2. Save Data ---
+    function saveData() {
+        config.img = document.getElementById("linkImg").value.trim();
+        config.url = document.getElementById("linkTo").value.trim();
+        config.size = document.getElementById("lsize").value;
+
+        if (!config.img || !config.url) {
+            Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+            return;
+        }
+
+        Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อย เตรียมส่งได้เลย!', 'success');
+    }
+
+    // --- 3. Flex Message Template ---
+    function getFlexPayload() {
+        return [{
+            "type": "flex",
+            "altText": "คุณได้รับรูปภาพใหม่",
+            "contents": {
+  "type": "bubble",
+  "size": "giga",
+  "header": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "🛠️ แจ้งซ่อมเครื่องShotBlast",
+        "weight": "bold",
+        "color": "#FFFFFF",
+        "size": "lg"
+      }
+    ],
+    "backgroundColor": "#E63946"
+  },
+  "hero": {
+    "type": "image",
+    "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png",
+    "size": "full",
+    "aspectMode": "cover",
+    "aspectRatio": "20:13"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "Machine ID: HFT-031",
+        "weight": "bold",
+        "size": "xl",
+        "margin": "md"
+      },
+      {
+        "type": "separator",
+        "margin": "md"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "margin": "lg",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "baseline",
+            "spacing": "sm",
+            "contents": [
+              {
+                "type": "text",
+                "text": "อาการ:",
+                "color": "#aaaaaa",
+                "size": "sm",
+                "flex": 1
+              },
+              {
+                "type": "text",
+                "text": "มอเตอร์มีความร้อนสูงผิดปกติ และมีเสียงดัง",
+                "wrap": true,
+                "color": "#666666",
+                "size": "sm",
+                "flex": 4
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "sm",
+    "contents": [
+      {
+        "type": "button",
+        "style": "primary",
+        "height": "sm",
+        "action": {
+          "type": "postback",
+          "label": "รับงาน (Accept)",
+          "data": "action=accept&id=HFT-031",
+          "displayText": "ตกลง รับงานเรียบร้อยครับ 👌"
+        },
+        "color": "#1D3557"
+      }
+    ],
+    "flex": 0
+  }
+}
+        }];
+    }
+
+    // --- 4. Share Target Picker (ส่งให้เพื่อน) ---
+    async function shareTargetPicker() {
+        if (!config.img) return Swal.fire('ลืมกดบันทึก?', 'กรุณากรอกข้อมูลและกดบันทึกก่อนครับ', 'info');
+
+        try {
+            const res = await liff.shareTargetPicker(getFlexPayload());
+            if (res) {
+                Swal.fire({ title: 'ส่งเรียบร้อย!', icon: 'success', timer: 1500, showConfirmButton: false })
+                    .then(() => liff.closeWindow());
+            }
+        } catch (err) {
+            Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่ง', 'error');
+        }
+    }
+
+    // --- 5. Send Message (ส่งใน OA) ---
+    async function sendMessageOA() {
+        if (!config.img) return Swal.fire('ลืมกดบันทึก?', 'กรุณากรอกข้อมูลและกดบันทึกก่อนครับ', 'info');
+
+        try {
+            await liff.sendMessages(getFlexPayload());
+            Swal.fire({ title: 'ส่งเข้าแชทแล้ว!', icon: 'success', timer: 1500, showConfirmButton: false })
+                .then(() => liff.closeWindow());
+        } catch (err) {
+            Swal.fire('Error', 'ไม่สามารถส่งข้อความได้ (ต้องเปิดในแอป LINE เท่านั้น)', 'error');
+        }
+    }
+
+    // --- 6. Send Sticker ---
+    async function sendSticker() {
+        try {
+            await liff.sendMessages([{ "type": "sticker", "packageId": "11537", "stickerId": "52002734" }]);
+            Swal.fire('สำเร็จ', 'ส่งสติ๊กเกอร์เรียบร้อย', 'success');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    main();
+</script>
+
+</body>
+</html>
