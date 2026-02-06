@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>ShotBlast Repair Notifier</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #E63946;
+            --bg-gradient: linear-gradient(135deg, #1d3557 0%, #457b9d 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--glass-bg);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        h2 { color: #333; text-align: center; margin-bottom: 10px; font-weight: 500; }
+        .subtitle { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 25px; }
+
+        .form-group { margin-bottom: 18px; }
+
+        label { display: block; margin-bottom: 8px; color: #555; font-size: 0.9rem; font-weight: 500; }
+
+        input[type=text], textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+            background: #fdfdfd;
+        }
+
+        input[type=text]:focus, textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+        }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-save { background-color: #333; color: white; }
+        .btn-share { background-color: #06C755; color: white; }
+        .btn-oa { background-color: #007bff; color: white; }
+
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        
+        .status-text {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛠️ แจ้งซ่อมเครื่องจักร</h2>
+    <p class="subtitle">ส่งข้อมูลแจ้งซ่อมไปยังแชท LINE</p>
+
+    <div class="form-group">
+        <label>รหัสเครื่องจักร (Machine ID)</label>
+        <input type="text" id="machineId" placeholder="เช่น HFT-031" value="HFT-031">
+    </div>
+
+    <div class="form-group">
+        <label>URL รูปภาพ (ปล่อยว่างเพื่อใช้ภาพเริ่มต้น)</label>
+        <input type="text" id="imgUrl" placeholder="https://example.com/image.jpg">
+    </div>
+
+    <div class="form-group">
+        <label>อาการที่พบ</label>
+        <textarea id="issueDetail" rows="3" placeholder="ระบุอาการผิดปกติ...">มอเตอร์มีความร้อนสูงผิดปกติ และมีเสียงดัง</textarea>
+    </div>
+
+    <div class="btn-stack">
+        <button class="btn-save" onclick="saveData()">💾 อัปเดตข้อมูล</button>
+        <button class="btn-share" onclick="shareTargetPicker()">📤 ส่งให้หัวหน้า/กลุ่มช่าง</button>
+        <button class="btn-oa" onclick="sendMessageOA()">💬 ส่งเข้าแชทนี้ (OA)</button>
+    </div>
+    
+    <p class="status-text" id="statusTxt">สถานะ: รอการเชื่อมต่อ LIFF...</p>
+</div>
+
+<script>
+    // ภาพเริ่มต้นที่เตรียมไว้
+    const DEFAULT_IMAGE = "https://factoryguideline.com/wp-content/uploads/2014/08/shutterstock_110002919-700x689.jpg";
+
+    let reportData = {
+        machineId: "HFT",
+        img: DEFAULT_IMAGE,
+        detail: "เสีย"
+    };
+
+    // --- 1. Initial LIFF ---
+    async function main() {
+        try {
+            await liff.init({ liffId: "1654802091-0yd1nOzG" });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('statusTxt').innerText = "สถานะ: เชื่อมต่อ LINE สำเร็จ";
+            }
+        } catch (err) {
+            console.error("LIFF Init Error", err);
+        }
+    }
+
+    // --- 2. Save/Update Data ---
+    function saveData() {
+        const inputImg = document.getElementById("imgUrl").value.trim();
+        
+        reportData.machineId = document.getElementById("machineId").value.trim();
+        reportData.detail = document.getElementById("issueDetail").value.trim();
+        
+        // เช็คว่าถ้าไม่ใส่ URL ให้ใช้ภาพ DEFAULT_IMAGE
+        reportData.img = inputImg ? inputImg : DEFAULT_IMAGE;
+
+        if (!reportData.machineId || !reportData.detail) {
+            Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลสำคัญให้ครบ', 'warning');
+            return;
+        }
+
+        Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
+    }
+
+    // --- 3. Flex Message Template ---
+    function getFlexPayload() {
+        return [{
+            "type": "flex",
+            "altText": "⚠️ แจ้งซ่อมเครื่องจักร: " + reportData.machineId,
+            "contents": {
+                "type": "bubble",
+                "size": "giga",
+                "header": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [{
+                        "type": "text",
+                        "text": "🛠️ แจ้งซ่อมเครื่องShotBlast",
+                        "weight": "bold",
+                        "color": "#FFFFFF",
+                        "size": "lg"
+                    }],
+                    "backgroundColor": "#E63946"
+                },
+                "hero": {
+                    "type": "image",
+                    "url": reportData.img,
+                    "size": "full",
+                    "aspectMode": "cover",
+                    "aspectRatio": "20:13"
+                },
+                "body": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [{
+                            "type": "text",
+                            "text": "Machine ID: " + reportData.machineId,
+                            "weight": "bold",
+                            "size": "xl",
+                            "margin": "md"
+                        },
+                        {
+                            "type": "separator",
+                            "margin": "md"
+                        },
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "margin": "lg",
+                            "spacing": "sm",
+                            "contents": [{
+                                "type": "box",
+                                "layout": "baseline",
+                                "spacing": "sm",
+                                "contents": [{
+                                        "type": "text",
+                                        "text": "อาการ:",
+                                        "color": "#aaaaaa",
+                                        "size": "sm",
+                                        "flex": 1
+                                    },
+                                    {
+                                        "type": "text",
+                                        "text": reportData.detail,
+                                        "wrap": true,
+                                        "color": "#666666",
+                                        "size": "sm",
+                                        "flex": 4
+                                    }
+                                ]
+                            }]
+                        }
+                    ]
+                }
+            }
+        }];
+    }
+
+    // --- 4. Share Target Picker ---
+    async function shareTargetPicker() {
+        try {
+            const res = await liff.shareTargetPicker(getFlexPayload());
+            if (res) {
+                Swal.fire({ title: 'ส่งเรียบร้อย!', icon: 'success', timer: 1000, showConfirmButton: false })
+                    .then(() => liff.closeWindow());
+            }
+        } catch (err) {
+            Swal.fire('Error', 'ไม่สามารถแชร์ได้', 'error');
+        }
+    }
+
+    // --- 5. Send Message (OA) ---
+    async function sendMessageOA() {
+        try {
+            await liff.sendMessages(getFlexPayload());
+            Swal.fire({ title: 'ส่งเข้าแชทแล้ว!', icon: 'success', timer: 1000, showConfirmButton: false })
+                .then(() => liff.closeWindow());
+        } catch (err) {
+            Swal.fire('Error', 'ต้องเปิดใน LINE เท่านั้น', 'error');
+        }
+    }
+
+    main();
+</script>
+
+</body>
+</html>
