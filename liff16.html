@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>Repair Reporting System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        :root { --primary-color: #E63946; --secondary-color: #1D3557; }
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+        body { margin: 0; padding: 20px; background: #f5f7fa; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 450px; background: white; padding: 25px; border-radius: 20px; shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 10px; color: white; }
+        .btn-share { background-color: #06C755; }
+        .btn-oa { background-color: #007bff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛠️ รายงานแจ้งซ่อม</h2>
+
+    <div class="form-group">
+        <label>รหัสเครื่องจักร (Machine ID)</label>
+        <input type="text" id="machineId" placeholder="ตัวอย่าง: HFT-031">
+    </div>
+
+    <div class="form-group">
+        <label>อาการที่พบ</label>
+        <input type="text" id="problem" placeholder="ระบุอาการเสีย">
+    </div>
+
+    <div class="form-group">
+        <label>URL รูปภาพ</label>
+        <input type="text" id="linkImg" placeholder="https://...">
+    </div>
+
+    <div class="form-group">
+        <label>สัดส่วนภาพ</label>
+        <select id="lsize">
+            <option value="1:1">1:1</option>
+            <option value="1:1.5" selected>1:1.5</option>
+            <option value="16:9">16:9</option>
+        </select>
+    </div>
+
+    <button class="btn-share" onclick="handleSend('share')">📤 ส่งให้เพื่อน/กลุ่ม</button>
+    <button class="btn-oa" onclick="handleSend('oa')">💬 ส่งเข้าแชทนี้ (OA)</button>
+    
+    <p id="statusTxt" style="text-align:center; font-size:12px; color:gray;">กำลังโหลด LIFF...</p>
+</div>
+
+<script>
+    async function main() {
+        try {
+            await liff.init({ liffId: "1654802091-0yd1nOzG" });
+            if (!liff.isLoggedIn()) { liff.login(); }
+            document.getElementById('statusTxt').innerText = "เชื่อมต่อ LINE สำเร็จ";
+        } catch (err) { console.error(err); }
+    }
+
+    // ฟังก์ชันรวบรวมข้อมูลจาก Input
+    function getFormData() {
+        return {
+            machine: document.getElementById("machineId").value.trim(),
+            problem: document.getElementById("problem").value.trim(),
+            img: document.getElementById("linkImg").value.trim() || "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png",
+            size: document.getElementById("lsize").value
+        };
+    }
+
+    // ฟังก์ชันสร้าง Flex Payload จากข้อมูลปัจจุบันในหน้าจอ
+    function createPayload(data) {
+        return [{
+            "type": "flex",
+            "altText": "⚠️ แจ้งซ่อมเครื่อง " + data.machine,
+            "contents": {
+                "type": "bubble",
+                "header": { "type": "box", "layout": "vertical", "contents": [{ "type": "text", "text": "🛠️ รายงานแจ้งซ่อม", "weight": "bold", "color": "#FFFFFF" }], "backgroundColor": "#E63946" },
+                "hero": { "type": "image", "url": data.img, "size": "full", "aspectRatio": data.size, "aspectMode": "cover" },
+                "body": {
+                    "type": "box", "layout": "vertical", "contents": [
+                        { "type": "text", "text": "Machine ID: " + data.machine, "weight": "bold", "size": "xl" },
+                        { "type": "separator", "margin": "md" },
+                        { "type": "box", "layout": "baseline", "margin": "md", "contents": [
+                            { "type": "text", "text": "อาการ:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
+                            { "type": "text", "text": data.problem, "wrap": true, "color": "#666666", "size": "sm", "flex": 4 }
+                        ]}
+                    ]
+                },
+                "footer": {
+                    "type": "box", "layout": "vertical", "contents": [{
+                        "type": "button", "style": "primary", "color": "#1D3557",
+                        "action": { "type": "postback", "label": "รับงาน (Accept)", "data": "action=accept&id=" + data.machine, "displayText": "รับงาน " + data.machine + " แล้ว" }
+                    }]
+                }
+            }
+        }];
+    }
+
+    // ฟังก์ชันส่งข้อมูล
+    async function handleSend(type) {
+        const data = getFormData();
+        if (!data.machine || !data.problem) {
+            return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสเครื่องและอาการ', 'warning');
+        }
+
+        const payload = createPayload(data);
+
+        try {
+            let res;
+            if (type === 'share') {
+                res = await liff.shareTargetPicker(payload);
+            } else {
+                res = await liff.sendMessages(payload);
+            }
+
+            if (res || type === 'oa') {
+                Swal.fire({ icon: 'success', title: 'ส่งสำเร็จ', timer: 1500 });
+            }
+        } catch (err) {
+            Swal.fire('Error', 'ไม่สามารถส่งได้: ' + err.message, 'error');
+        }
+    }
+
+    main();
+</script>
+
+</body>
+</html>
