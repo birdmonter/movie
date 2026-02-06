@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>Maintenance Report Fix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        :root { --danger: #E63946; --navy: #1D3557; --bg-gradient: linear-gradient(135deg, #1D3557 0%, #457B9D 100%); }
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+        body { margin: 0; padding: 20px; min-height: 100vh; background: var(--bg-gradient); display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 450px; background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
+        h2 { color: var(--danger); text-align: center; margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 15px; outline: none; font-size: 16px; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: 500; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-share { background-color: var(--danger); color: white; }
+        .btn-close { background-color: #eee; color: #333; }
+        #statusTxt { font-size: 11px; color: #888; text-align: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛠️ แจ้งซ่อมเครื่องจักร</h2>
+    <label>URL รูปภาพ</label>
+    <input type="text" id="linkImg" placeholder="https://...">
+    <label>Machine ID</label>
+    <input type="text" id="mID" value="HFT-031">
+    <label>อาการเสีย</label>
+    <textarea id="issue" rows="3" placeholder="ระบุอาการ..."></textarea>
+
+    <button class="btn-share" onclick="shareReport()">📤 ส่งข้อมูล (Share)</button>
+    <button class="btn-close" onclick="liff.closeWindow()">ปิด</button>
+    <p id="statusTxt">สถานะ: กำลังเริ่มระบบ...</p>
+</div>
+
+<script>
+    async function main() {
+        try {
+            // ** เปลี่ยน ID ตรงนี้เป็นของคุณ **
+            await liff.init({ liffId: "1654802091-0yd1nOzG" }); 
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('statusTxt').innerText = "สถานะ: เชื่อมต่อ LINE แล้ว";
+            }
+        } catch (err) {
+            document.getElementById('statusTxt').innerText = "สถานะ: เชื่อมต่อไม่สำเร็จ";
+            console.error(err);
+        }
+    }
+
+    async function shareReport() {
+        const img = document.getElementById("linkImg").value.trim();
+        const mID = document.getElementById("mID").value.trim();
+        const issue = document.getElementById("issue").value.trim();
+
+        if (!img || !issue) {
+            return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
+        }
+
+        // ตรวจสอบว่าเปิดฟังก์ชัน Share ได้หรือไม่
+        if (!liff.isApiAvailable('shareTargetPicker')) {
+            return Swal.fire('Error', 'กรุณาเปิด Scope "shareTargetPicker" ใน LINE Developers', 'error');
+        }
+
+        try {
+            const res = await liff.shareTargetPicker([
+                {
+                    "type": "flex",
+                    "altText": "⚠️ แจ้งซ่อมเครื่อง " + mID,
+                    "contents": {
+                        "type": "bubble",
+                        "size": "giga",
+                        "header": {
+                            "type": "box", "layout": "vertical", "backgroundColor": "#E63946",
+                            "contents": [{"type": "text", "text": "🛠️ แจ้งซ่อมเครื่องShotBlast", "weight": "bold", "color": "#FFFFFF"}]
+                        },
+                        "hero": {
+                            "type": "image", "url": img, "size": "full", "aspectMode": "cover", "aspectRatio": "20:13"
+                        },
+                        "body": {
+                            "type": "box", "layout": "vertical",
+                            "contents": [
+                                { "type": "text", "text": "Machine ID: " + mID, "weight": "bold", "size": "xl" },
+                                { "type": "separator", "margin": "md" },
+                                {
+                                    "type": "box", "layout": "baseline", "margin": "md", "contents": [
+                                        { "type": "text", "text": "อาการ:", "color": "#aaaaaa", "flex": 1, "size": "sm" },
+                                        { "type": "text", "text": issue, "wrap": true, "color": "#666666", "flex": 4, "size": "sm" }
+                                    ]
+                                }
+                            ]
+                        },
+                        "footer": {
+                            "type": "box", "layout": "vertical",
+                            "contents": [{
+                                "type": "button", "style": "primary", "color": "#1D3557",
+                                "action": { "type": "postback", "label": "รับงาน (Accept)", "data": "id=" + mID }
+                            }]
+                        }
+                    }
+                }
+            ]);
+
+            if (res) {
+                Swal.fire({ icon: 'success', title: 'ส่งข้อมูลเรียบร้อย', timer: 1500, showConfirmButton: false }).then(() => liff.closeWindow());
+            } else {
+                // กรณีผู้ใช้กดยกเลิก
+                console.log("User cancelled shareTargetPicker");
+            }
+        } catch (error) {
+            Swal.fire('แชร์ไม่สำเร็จ', 'ข้อผิดพลาด: ' + error.message, 'error');
+            console.error(error);
+        }
+    }
+
+    main();
+</script>
+</body>
+</html>
