@@ -3,124 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>แจ้งซ่อมเครื่อง ShotBlast</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>ShotBlast Maintenance Report</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
     <style>
-        :root { --danger: #E63946; --navy: #1D3557; --gray: #F1F4F9; }
-        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
-        body { background-color: var(--gray); padding: 15px; margin: 0; }
-        
-        .container { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h2 { color: var(--danger); margin: 0; font-size: 24px; }
-        
-        label { display: block; margin-bottom: 8px; font-weight: 500; color: #444; }
-        input, textarea { 
-            width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; 
-            margin-bottom: 20px; outline: none; transition: 0.3s; font-size: 16px;
+        :root {
+            --primary-color: #E63946; /* Red for Maintenance */
+            --navy-color: #1D3557;
+            --bg-gradient: linear-gradient(135deg, #1D3557 0%, #457B9D 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
         }
-        input:focus, textarea:focus { border-color: var(--danger); }
 
-        .upload-area {
-            border: 2px dashed #ccc; border-radius: 12px; padding: 20px;
-            text-align: center; cursor: pointer; margin-bottom: 20px; background: #fafafa;
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+
+        body {
+            margin: 0; padding: 20px; min-height: 100vh;
+            background: var(--bg-gradient);
+            display: flex; justify-content: center; align-items: flex-start;
         }
+
+        .container {
+            width: 100%; max-width: 450px;
+            background: var(--glass-bg);
+            padding: 30px; border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        h2 { color: var(--primary-color); text-align: center; margin-bottom: 5px; font-weight: 500; }
+        p.subtitle { text-align: center; color: #666; margin-bottom: 25px; font-size: 0.9rem; }
+
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-size: 0.9rem; font-weight: 500; }
+
+        input[type=text], textarea {
+            width: 100%; padding: 12px 15px; border: 2px solid #eee;
+            border-radius: 12px; font-size: 16px; transition: all 0.3s ease; outline: none;
+        }
+
+        input:focus, textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1); }
+
+        /* Photo Upload Zone */
+        .upload-zone {
+            border: 2px dashed #ccc; border-radius: 12px; padding: 15px;
+            text-align: center; cursor: pointer; background: #fff; transition: 0.3s;
+        }
+        .upload-zone:hover { border-color: var(--primary-color); background: #fff5f5; }
         .preview-img { width: 100%; border-radius: 10px; display: none; margin-top: 10px; }
 
-        .btn-send {
-            background: var(--navy); color: white; border: none; width: 100%;
-            padding: 16px; border-radius: 12px; font-size: 18px; font-weight: 600;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(29, 53, 87, 0.3);
+        .btn-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
+
+        button {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn-send:active { transform: scale(0.98); }
+
+        .btn-process { background-color: var(--navy-color); color: white; }
+        .btn-share { background-color: var(--primary-color); color: white; }
+        .btn-close { background-color: #666; color: white; }
+
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
         
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); display: none; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 1000;
-        }
+        #statusTxt { font-size: 12px; color: #888; text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-<div id="loadingOverlay">
-    <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--danger); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-    <p>กำลังอัปโหลดรูปและส่งข้อมูล...</p>
-</div>
-
 <div class="container">
-    <div class="header">
-        <h2>🛠️ รายงานแจ้งซ่อม</h2>
-        <small>เครื่อง ShotBlast (HFT Series)</small>
+    <h2>แจ้งซ่อมเครื่อง ShotBlast</h2>
+    <p class="subtitle">ระบบรายงานความบกพร่องเครื่องจักร</p>
+
+    <div class="form-group">
+        <label>ถ่ายรูปจุดที่ชำรุด</label>
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+            <span id="uploadTxt">📷 แตะเพื่อถ่ายรูปหรือเลือกรูป</span>
+            <img id="imagePreview" class="preview-img">
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handlePreview()">
     </div>
 
-    <label>รหัสเครื่องจักร (Machine ID)</label>
-    <input type="text" id="mID" placeholder="ตัวอย่าง: HFT-031" value="HFT-031">
-
-    <label>อาการเสียที่พบ</label>
-    <textarea id="issue" rows="3" placeholder="ระบุอาการเบื้องต้น..."></textarea>
-
-    <label>ถ่ายรูปจุดที่ชำรุด</label>
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-        <span id="uploadTxt">📷 กดเพื่อถ่ายรูป หรือ เลือกรูปภาพ</span>
-        <img id="imagePreview" class="preview-img">
+    <div class="form-group">
+        <label>รหัสเครื่องจักร (Machine ID)</label>
+        <input type="text" id="mID" placeholder="เช่น HFT-031" value="HFT-031">
     </div>
-    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="previewImg()">
 
-    <button class="btn-send" onclick="submitRepair()">ส่งข้อมูลแจ้งซ่อม</button>
+    <div class="form-group">
+        <label>อาการที่พบ</label>
+        <textarea id="issue" rows="3" placeholder="ระบุอาการเสียเบื้องต้น..."></textarea>
+    </div>
+
+    <div class="btn-stack">
+        <button id="btnPrepare" class="btn-process" onclick="prepareData()">🔄 1. อัปโหลดและเตรียมข้อมูล</button>
+        <button id="btnShare" class="btn-share" onclick="shareReport()" style="display:none;">📤 2. ส่งรายงานให้ทีมช่าง</button>
+        <button class="btn-close" onclick="liff.closeWindow()">ยกเลิก</button>
+    </div>
+    
+    <p id="statusTxt">สถานะ: กำลังเชื่อมต่อ LIFF...</p>
 </div>
 
 <script>
-    let finalImageUrl = "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png"; // Default
+    let reportData = {
+        imgUrl: "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png",
+        mID: "",
+        issue: ""
+    };
 
+    // --- 1. Initial LIFF ---
     async function main() {
-        await liff.init({ liffId: "YOUR_LIFF_ID_HERE" }); // เปลี่ยนเป็น LIFF ID ของคุณ
-        if (!liff.isLoggedIn()) liff.login();
-    }
-
-    function previewImg() {
-        const file = document.getElementById('fileInput').files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const preview = document.getElementById('imagePreview');
-            preview.src = reader.result;
-            preview.style.display = 'block';
-            document.getElementById('uploadTxt').style.display = 'none';
+        try {
+            await liff.init({ liffId: "1654802091-0yd1nOzG" });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('statusTxt').innerText = "สถานะ: เชื่อมต่อ LINE สำเร็จ";
+            }
+        } catch (err) {
+            console.error(err);
         }
-        if (file) reader.readAsDataURL(file);
     }
 
-    async function uploadImage() {
+    // --- 2. Preview Photo ---
+    function handlePreview() {
+        const file = document.getElementById('fileInput').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const preview = document.getElementById('imagePreview');
+                preview.src = reader.result;
+                preview.style.display = 'block';
+                document.getElementById('uploadTxt').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // --- 3. Upload to Imgur & Save Data ---
+    async function prepareData() {
         const fileInput = document.getElementById('fileInput');
-        if (!fileInput.files[0]) return; // ถ้าไม่เลือกรูป ใช้ Default
+        const mID = document.getElementById('mID').value.trim();
+        const issue = document.getElementById('issue').value.trim();
 
-        const formData = new FormData();
-        formData.append('image', fileInput.files[0]);
+        if (!fileInput.files[0] || !issue) {
+            return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาถ่ายรูปและระบุอาการเสีย', 'warning');
+        }
 
-        const res = await fetch('https://api.imgur.com/3/image', {
-            method: 'POST',
-            headers: { Authorization: 'Client-ID 7837090b4317926' }, // ใส่ Client-ID ของคุณ
-            body: formData
-        });
-        const data = await res.json();
-        if (data.success) finalImageUrl = data.data.link;
-    }
-
-    async function submitRepair() {
-        const mID = document.getElementById('mID').value;
-        const issue = document.getElementById('issue').value;
-
-        if (!issue) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุอาการเสีย', 'warning');
-
-        document.getElementById('loadingOverlay').style.display = 'flex';
+        // แสดง Loading
+        Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
 
         try {
-            await uploadImage(); // อัปโหลดรูปก่อน
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
 
-            const flexData = {
+            const res = await fetch('https://api.imgur.com/3/image', {
+                method: 'POST',
+                headers: { Authorization: 'Client-ID 7837090b4317926' }, 
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                reportData.imgUrl = data.data.link;
+                reportData.mID = mID;
+                reportData.issue = issue;
+
+                Swal.close();
+                Swal.fire('สำเร็จ', 'ข้อมูลพร้อมส่งแล้ว!', 'success');
+                document.getElementById('btnPrepare').style.display = 'none';
+                document.getElementById('btnShare').style.display = 'flex';
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (err) {
+            Swal.fire('Error', 'อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่', 'error');
+        }
+    }
+
+    // --- 4. Flex Message Template ---
+    function getFlexPayload() {
+        return [{
+            "type": "flex",
+            "altText": "🛠️ แจ้งซ่อมเครื่องจักร: " + reportData.mID,
+            "contents": {
                 "type": "bubble",
                 "size": "giga",
                 "header": {
@@ -129,12 +196,12 @@
                     "backgroundColor": "#E63946"
                 },
                 "hero": {
-                    "type": "image", "url": finalImageUrl, "size": "full", "aspectMode": "cover", "aspectRatio": "20:13"
+                    "type": "image", "url": reportData.imgUrl, "size": "full", "aspectMode": "cover", "aspectRatio": "20:13"
                 },
                 "body": {
                     "type": "box", "layout": "vertical",
                     "contents": [
-                        { "type": "text", "text": `Machine ID: ${mID}`, "weight": "bold", "size": "xl", "margin": "md" },
+                        { "type": "text", "text": "Machine ID: " + reportData.mID, "weight": "bold", "size": "xl", "margin": "md" },
                         { "type": "separator", "margin": "md" },
                         {
                             "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm",
@@ -142,7 +209,7 @@
                                 "type": "box", "layout": "baseline", "spacing": "sm",
                                 "contents": [
                                     { "type": "text", "text": "อาการ:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
-                                    { "type": "text", "text": issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 4 }
+                                    { "type": "text", "text": reportData.issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 4 }
                                 ]
                             }]
                         }
@@ -154,30 +221,32 @@
                         "type": "button", "style": "primary", "height": "sm",
                         "action": {
                             "type": "postback", "label": "รับงาน (Accept)",
-                            "data": `action=accept&id=${mID}`,
-                            "displayText": `ตกลง รับงานเครื่อง ${mID} เรียบร้อยครับ 👌`
+                            "data": "action=accept&id=" + reportData.mID,
+                            "displayText": "ตกลง รับงานเครื่อง " + reportData.mID + " เรียบร้อยครับ 👌"
                         },
                         "color": "#1D3557"
                     }]
                 }
-            };
+            }
+        }];
+    }
 
-            // ส่งเข้าแชท (ใช้ shareTargetPicker เพื่อให้ส่งเข้ากลุ่มได้)
-            const result = await liff.shareTargetPicker([{ "type": "flex", "altText": "แจ้งซ่อมเครื่องจักรใหม่", "contents": flexData }]);
-            
-            if (result) {
-                Swal.fire('สำเร็จ!', 'ส่งรายงานแจ้งซ่อมเรียบร้อย', 'success').then(() => liff.closeWindow());
+    // --- 5. Share Report ---
+    async function shareReport() {
+        try {
+            const res = await liff.shareTargetPicker(getFlexPayload());
+            if (res) {
+                Swal.fire({ title: 'ส่งรายงานสำเร็จ!', icon: 'success', timer: 1500, showConfirmButton: false })
+                    .then(() => liff.closeWindow());
             }
         } catch (err) {
-            Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
+            Swal.fire('Error', 'เกิดข้อผิดพลาดในการแชร์', 'error');
         }
     }
 
     main();
 </script>
 
-<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 </body>
-</html>
+    </html>
+    
