@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
+<title>Flexส่งรูป</title>
+</head>
+
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://static.line-scdn.net/liff/edge/sdk.js"></script>
+
+<label>url ของภาพ:</label><br>
+<input type="text" id="linkImg"><br>
+
+<label>ให้ลิงค์ไปที่:</label><br>
+<input type="text" id="linkTo"><br>
+
+<label>ขนาดของภาพ (กว้าง : สูง)</label><br>
+<select id="lsize">
+  <option value="1:1">1:1</option>
+  <option value="1:1.5" selected>1:1.5</option>
+  <option value="9:16">9:16</option>
+  <option value="16:9">16:9</option>
+</select>
+
+<br><br>
+
+<button onclick="add()">บันทึก</button>
+<button onclick="shareimage()">ส่งภาพให้เพื่อน</button>
+<button onclick="shareimageOA()">แชร์ใน OA</button>
+
+<script>
+const LIFF_ID = "1654802091-0yd1nOzG"
+
+let linkImage = ""
+let linkToUrl = ""
+let lsizeurl = "1:1.5"
+
+async function initLIFF() {
+  await liff.init({ liffId: LIFF_ID })
+
+  if (!liff.isLoggedIn()) {
+    liff.login()
+  }
+}
+initLIFF()
+
+function add() {
+  linkImage = document.getElementById("linkImg").value
+  linkToUrl = document.getElementById("linkTo").value
+  lsizeurl = document.getElementById("lsize").value
+}
+
+function flexMessage() {
+  return {
+    type: "flex",
+    altText: "มีข้อความใหม่",
+    contents: {
+      type: "bubble",
+      size: "giga",
+      body: {
+        type: "box",
+        layout: "vertical",
+        paddingAll: "0px",
+        contents: [
+          {
+            type: "image",
+            url: linkImage,
+            size: "full",
+            aspectRatio: lsizeurl,
+            aspectMode: "cover",
+            action: {
+              type: "uri",
+              uri: linkToUrl
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+
+async function shareimage() {
+  if (!liff.isInClient()) {
+    Swal.fire("เปิดใน LINE เท่านั้น")
+    return
+  }
+
+  await liff.shareTargetPicker([flexMessage()])
+  Swal.fire("สำเร็จ", "ส่งให้เพื่อนเรียบร้อย", "success")
+}
+
+async function shareimageOA() {
+  await liff.sendMessages([flexMessage()])
+  Swal.fire("สำเร็จ", "แชร์เข้า OA แล้ว", "success")
+  liff.closeWindow()
+}
+</script>
+
+</body>
+</html>
