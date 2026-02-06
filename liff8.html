@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flex ส่งรูป</title>
+</head>
+
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://static.line-scdn.net/liff/edge/sdk.js"></script>
+
+<p>URL รูป:</p>
+<input id="linkImg" style="width:100%">
+
+<p>ลิงก์ไปที่:</p>
+<input id="linkTo" style="width:100%">
+
+<p>ขนาด:</p>
+<select id="lsize">
+  <option value="1:1">1:1</option>
+  <option value="1:1.5" selected>1:1.5</option>
+  <option value="9:16">9:16</option>
+</select>
+
+<br><br>
+
+<button onclick="add()">บันทึก</button>
+<button onclick="share()">ส่งให้เพื่อน</button>
+
+<script>
+const LIFF_ID = "1654802091-0yd1nOzG"
+
+let linkImage = ""
+let linkToUrl = ""
+let lsizeurl = ""
+
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID })
+
+    if (!liff.isLoggedIn()) {
+      liff.login()
+    }
+  } catch (e) {
+    alert("LIFF init error")
+    console.error(e)
+  }
+}
+init()
+
+function add() {
+  linkImage = linkImg.value
+  linkToUrl = linkTo.value
+  lsizeurl = lsize.value
+
+  Swal.fire("บันทึกแล้ว")
+}
+
+function flex() {
+  return {
+    type: "flex",
+    altText: "Flex Message",
+    contents: {
+      type: "bubble",
+      body: {
+        type: "box",
+        layout: "vertical",
+        paddingAll: "0px",
+        contents: [{
+          type: "image",
+          url: linkImage,
+          size: "full",
+          aspectRatio: lsizeurl,
+          aspectMode: "cover",
+          action: {
+            type: "uri",
+            uri: linkToUrl
+          }
+        }]
+      }
+    }
+  }
+}
+
+async function share() {
+  if (!liff.isInClient()) {
+    Swal.fire("❌ ต้องเปิดใน LINE App")
+    return
+  }
+
+  if (!linkImage || !linkToUrl) {
+    Swal.fire("❌ ยังไม่ได้บันทึกข้อมูล")
+    return
+  }
+
+  await liff.shareTargetPicker([flex()])
+  Swal.fire("✅ ส่งเรียบร้อย")
+}
+</script>
+
+</body>
+</html>
