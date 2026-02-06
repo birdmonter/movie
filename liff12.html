@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>Maintenance Report (URL)</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #E63946;
+            --navy-color: #1D3557;
+            --bg-gradient: linear-gradient(135deg, #1D3557 0%, #457B9D 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+
+        body {
+            margin: 0; padding: 20px; min-height: 100vh;
+            background: var(--bg-gradient);
+            display: flex; justify-content: center; align-items: flex-start;
+        }
+
+        .container {
+            width: 100%; max-width: 450px;
+            background: var(--glass-bg);
+            padding: 30px; border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        h2 { color: var(--primary-color); text-align: center; margin-bottom: 5px; font-weight: 500; }
+        p.subtitle { text-align: center; color: #666; margin-bottom: 25px; font-size: 0.9rem; }
+
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-size: 0.9rem; font-weight: 500; }
+
+        input[type=text], textarea {
+            width: 100%; padding: 12px 15px; border: 2px solid #eee;
+            border-radius: 12px; font-size: 16px; transition: all 0.3s ease; outline: none;
+        }
+
+        input:focus, textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1); }
+
+        /* Image Preview Box */
+        .img-preview {
+            width: 100%; height: 200px; background: #eee; border-radius: 12px;
+            margin-bottom: 15px; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; border: 2px solid #fff;
+        }
+        .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+
+        button {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .btn-save { background-color: #333; color: white; }
+        .btn-share { background-color: var(--primary-color); color: white; }
+        .btn-close { background-color: #f1f1f1; color: #333; }
+
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        
+        #statusTxt { font-size: 11px; color: #888; text-align: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>แจ้งซ่อมเครื่อง ShotBlast</h2>
+    <p class="subtitle">ส่งรายงานผ่าน URL รูปภาพ</p>
+
+    <div class="img-preview" id="previewBox">
+        <span id="placeholderTxt" style="color:#999">ใส่ URL เพื่อดูตัวอย่างรูป</span>
+    </div>
+
+    <div class="form-group">
+        <label>URL ของรูปภาพ</label>
+        <input type="text" id="linkImg" placeholder="https://..." oninput="updatePreview()">
+    </div>
+
+    <div class="form-group">
+        <label>รหัสเครื่องจักร (Machine ID)</label>
+        <input type="text" id="mID" value="HFT-031">
+    </div>
+
+    <div class="form-group">
+        <label>อาการที่พบ</label>
+        <textarea id="issue" rows="3" placeholder="ระบุอาการเสีย..."></textarea>
+    </div>
+
+    <div class="btn-stack">
+        <button class="btn-save" onclick="saveData()">💾 1. บันทึกข้อมูล</button>
+        <button class="btn-share" onclick="shareReport()">📤 2. ส่งให้เพื่อน/กลุ่ม</button>
+        <button class="btn-close" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
+    </div>
+    
+    <p id="statusTxt">สถานะ: กำลังโหลด LIFF...</p>
+</div>
+
+<script>
+    let reportData = {
+        img: "",
+        mID: "",
+        issue: ""
+    };
+
+    async function main() {
+        try {
+            await liff.init({ liffId: "1654802091-0yd1nOzG" });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('statusTxt').innerText = "สถานะ: เชื่อมต่อ LINE สำเร็จ";
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    function updatePreview() {
+        const url = document.getElementById('linkImg').value.trim();
+        const box = document.getElementById('previewBox');
+        if(url) {
+            box.innerHTML = `<img src="${url}" onerror="this.src='https://via.placeholder.com/400x250?text=Invalid+Image+URL'">`;
+        } else {
+            box.innerHTML = `<span style="color:#999">ใส่ URL เพื่อดูตัวอย่างรูป</span>`;
+        }
+    }
+
+    function saveData() {
+        reportData.img = document.getElementById("linkImg").value.trim();
+        reportData.mID = document.getElementById("mID").value.trim();
+        reportData.issue = document.getElementById("issue").value.trim();
+
+        if (!reportData.img || !reportData.issue) {
+            Swal.fire('ข้อมูลไม่ครบ', 'กรุณาใส่ URL รูปและอาการเสีย', 'warning');
+            return;
+        }
+        Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อย กดส่งได้เลย!', 'success');
+    }
+
+    function getFlexPayload() {
+        return [{
+            "type": "flex",
+            "altText": "🛠️ แจ้งซ่อมเครื่อง " + reportData.mID,
+            "contents": {
+                "type": "bubble",
+                "size": "giga",
+                "header": {
+                    "type": "box", "layout": "vertical",
+                    "contents": [{ "type": "text", "text": "🛠️ แจ้งซ่อมเครื่องShotBlast", "weight": "bold", "color": "#FFFFFF", "size": "lg" }],
+                    "backgroundColor": "#E63946"
+                },
+                "hero": {
+                    "type": "image", "url": reportData.img, "size": "full", "aspectMode": "cover", "aspectRatio": "20:13"
+                },
+                "body": {
+                    "type": "box", "layout": "vertical",
+                    "contents": [
+                        { "type": "text", "text": "Machine ID: " + reportData.mID, "weight": "bold", "size": "xl", "margin": "md" },
+                        { "type": "separator", "margin": "md" },
+                        {
+                            "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm",
+                            "contents": [{
+                                "type": "box", "layout": "baseline", "spacing": "sm",
+                                "contents": [
+                                    { "type": "text", "text": "อาการ:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
+                                    { "type": "text", "text": reportData.issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 4 }
+                                ]
+                            }]
+                        }
+                    ]
+                },
+                "footer": {
+                    "type": "box", "layout": "vertical", "spacing": "sm",
+                    "contents": [{
+                        "type": "button", "style": "primary", "height": "sm",
+                        "action": {
+                            "type": "postback", "label": "รับงาน (Accept)",
+                            "data": "action=accept&id=" + reportData.mID,
+                            "displayText": "ตกลง รับงานเครื่อง " + reportData.mID + " เรียบร้อยครับ 👌"
+                        },
+                        "color": "#1D3557"
+                    }]
+                }
+            }
+        }];
+    }
+
+    async function shareReport() {
+        if (!reportData.img) return Swal.fire('ลืมกดบันทึก?', 'กรุณากดปุ่มบันทึกข้อมูลก่อนครับ', 'info');
+        try {
+            const res = await liff.shareTargetPicker(getFlexPayload());
+            if (res) liff.closeWindow();
+        } catch (err) { Swal.fire('Error', 'ไม่สามารถส่งได้', 'error'); }
+    }
+
+    main();
+</script>
+</body>
+</html>
