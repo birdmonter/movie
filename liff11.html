@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>แจ้งซ่อมเครื่อง ShotBlast</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <style>
+        :root { --danger: #E63946; --navy: #1D3557; --gray: #F1F4F9; }
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+        body { background-color: var(--gray); padding: 15px; margin: 0; }
+        
+        .container { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h2 { color: var(--danger); margin: 0; font-size: 24px; }
+        
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #444; }
+        input, textarea { 
+            width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; 
+            margin-bottom: 20px; outline: none; transition: 0.3s; font-size: 16px;
+        }
+        input:focus, textarea:focus { border-color: var(--danger); }
+
+        .upload-area {
+            border: 2px dashed #ccc; border-radius: 12px; padding: 20px;
+            text-align: center; cursor: pointer; margin-bottom: 20px; background: #fafafa;
+        }
+        .preview-img { width: 100%; border-radius: 10px; display: none; margin-top: 10px; }
+
+        .btn-send {
+            background: var(--navy); color: white; border: none; width: 100%;
+            padding: 16px; border-radius: 12px; font-size: 18px; font-weight: 600;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(29, 53, 87, 0.3);
+        }
+        .btn-send:active { transform: scale(0.98); }
+        
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+    <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--danger); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+    <p>กำลังอัปโหลดรูปและส่งข้อมูล...</p>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h2>🛠️ รายงานแจ้งซ่อม</h2>
+        <small>เครื่อง ShotBlast (HFT Series)</small>
+    </div>
+
+    <label>รหัสเครื่องจักร (Machine ID)</label>
+    <input type="text" id="mID" placeholder="ตัวอย่าง: HFT-031" value="HFT-031">
+
+    <label>อาการเสียที่พบ</label>
+    <textarea id="issue" rows="3" placeholder="ระบุอาการเบื้องต้น..."></textarea>
+
+    <label>ถ่ายรูปจุดที่ชำรุด</label>
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <span id="uploadTxt">📷 กดเพื่อถ่ายรูป หรือ เลือกรูปภาพ</span>
+        <img id="imagePreview" class="preview-img">
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="previewImg()">
+
+    <button class="btn-send" onclick="submitRepair()">ส่งข้อมูลแจ้งซ่อม</button>
+</div>
+
+<script>
+    let finalImageUrl = "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_1_cafe.png"; // Default
+
+    async function main() {
+        await liff.init({ liffId: "YOUR_LIFF_ID_HERE" }); // เปลี่ยนเป็น LIFF ID ของคุณ
+        if (!liff.isLoggedIn()) liff.login();
+    }
+
+    function previewImg() {
+        const file = document.getElementById('fileInput').files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const preview = document.getElementById('imagePreview');
+            preview.src = reader.result;
+            preview.style.display = 'block';
+            document.getElementById('uploadTxt').style.display = 'none';
+        }
+        if (file) reader.readAsDataURL(file);
+    }
+
+    async function uploadImage() {
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files[0]) return; // ถ้าไม่เลือกรูป ใช้ Default
+
+        const formData = new FormData();
+        formData.append('image', fileInput.files[0]);
+
+        const res = await fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: { Authorization: 'Client-ID 7837090b4317926' }, // ใส่ Client-ID ของคุณ
+            body: formData
+        });
+        const data = await res.json();
+        if (data.success) finalImageUrl = data.data.link;
+    }
+
+    async function submitRepair() {
+        const mID = document.getElementById('mID').value;
+        const issue = document.getElementById('issue').value;
+
+        if (!issue) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุอาการเสีย', 'warning');
+
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        try {
+            await uploadImage(); // อัปโหลดรูปก่อน
+
+            const flexData = {
+                "type": "bubble",
+                "size": "giga",
+                "header": {
+                    "type": "box", "layout": "vertical",
+                    "contents": [{ "type": "text", "text": "🛠️ แจ้งซ่อมเครื่องShotBlast", "weight": "bold", "color": "#FFFFFF", "size": "lg" }],
+                    "backgroundColor": "#E63946"
+                },
+                "hero": {
+                    "type": "image", "url": finalImageUrl, "size": "full", "aspectMode": "cover", "aspectRatio": "20:13"
+                },
+                "body": {
+                    "type": "box", "layout": "vertical",
+                    "contents": [
+                        { "type": "text", "text": `Machine ID: ${mID}`, "weight": "bold", "size": "xl", "margin": "md" },
+                        { "type": "separator", "margin": "md" },
+                        {
+                            "type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm",
+                            "contents": [{
+                                "type": "box", "layout": "baseline", "spacing": "sm",
+                                "contents": [
+                                    { "type": "text", "text": "อาการ:", "color": "#aaaaaa", "size": "sm", "flex": 1 },
+                                    { "type": "text", "text": issue, "wrap": true, "color": "#666666", "size": "sm", "flex": 4 }
+                                ]
+                            }]
+                        }
+                    ]
+                },
+                "footer": {
+                    "type": "box", "layout": "vertical", "spacing": "sm",
+                    "contents": [{
+                        "type": "button", "style": "primary", "height": "sm",
+                        "action": {
+                            "type": "postback", "label": "รับงาน (Accept)",
+                            "data": `action=accept&id=${mID}`,
+                            "displayText": `ตกลง รับงานเครื่อง ${mID} เรียบร้อยครับ 👌`
+                        },
+                        "color": "#1D3557"
+                    }]
+                }
+            };
+
+            // ส่งเข้าแชท (ใช้ shareTargetPicker เพื่อให้ส่งเข้ากลุ่มได้)
+            const result = await liff.shareTargetPicker([{ "type": "flex", "altText": "แจ้งซ่อมเครื่องจักรใหม่", "contents": flexData }]);
+            
+            if (result) {
+                Swal.fire('สำเร็จ!', 'ส่งรายงานแจ้งซ่อมเรียบร้อย', 'success').then(() => liff.closeWindow());
+            }
+        } catch (err) {
+            Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่งข้อมูล', 'error');
+        } finally {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+    }
+
+    main();
+</script>
+
+<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
+</body>
+</html>
