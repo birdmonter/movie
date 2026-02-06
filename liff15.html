@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>Repair Reporting System</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #E63946; /* Red for Urgent/Repair */
+            --secondary-color: #1D3557;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: var(--secondary-color); text-align: center; margin-bottom: 20px; }
+
+        .form-group { margin-bottom: 15px; }
+
+        label { display: block; margin-bottom: 5px; color: #444; font-size: 0.95rem; font-weight: 500; }
+
+        input[type=text], select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--primary-color); }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-save { background-color: var(--secondary-color); color: white; }
+        .btn-share { background-color: #06C755; color: white; }
+        
+        button:active { transform: scale(0.98); }
+        
+        .status-txt {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛠️ แจ้งซ่อมเครื่องจักร</h2>
+
+    <div class="form-group">
+        <label>รหัสเครื่องจักร (Machine ID)</label>
+        <input type="text" id="machineId" placeholder="เช่น HFT-031">
+    </div>
+
+    <div class="form-group">
+        <label>อาการที่พบ (Problem)</label>
+        <input type="text" id="problem" placeholder="เช่น มอเตอร์ร้อน, มีเสียงดัง">
+    </div>
+
+    <div class="form-group">
+        <label>URL รูปภาพความเสียหาย</label>
+        <input type="text" id="linkImg" placeholder="https://example.com/image.jpg">
+    </div>
+
+    <div class="form-group">
+        <label>สัดส่วนรูปภาพ</label>
+        <select id="lsize">
+            <option value="1:1">1:1 (สี่เหลี่ยมจตุรัส)</option>
+            <option value="1:1.5" selected>1:1.5 (แนวตั้ง)</option>
+            <option value="16:9">16:9 (แนวนอน)</option>
+        </select>
+    </div>
+
+    <div class="btn-stack">
+        <button class="btn-save" onclick="saveData()">💾 บันทึกข้อมูล</button>
+        <button class="btn-share" onclick="shareTargetPicker()">📤 ส่งรายงานแจ้งซ่อม</button>
+    </div>
+    
+    <p class="status-txt" id="statusTxt">รอการเชื่อมต่อ LIFF...</p>
+</div>
+
+<script>
+    // ตัวแปรเก็บข้อมูลแจ้งซ่อม
+    let config = {
+        machine: "",
+        problem: "",
+        img: "",
+        size: "1:1.5"
+    };
+
+    // 1. เริ่มต้น LIFF
+    async function main() {
+        try {
+            await liff.init({ liffId: "1654802091-0yd1nOzG" }); // ตรวจสอบ ID ให้ถูกต้อง
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('statusTxt').innerText = "สถานะ: เชื่อมต่อ LINE แล้ว";
+            }
+        } catch (err) {
+            console.error("LIFF Error", err);
+        }
+    }
+
+    // 2. บันทึกค่าจาก Input ลงตัวแปร
+    function saveData() {
+        config.machine = document.getElementById("machineId").value.trim();
+        config.problem = document.getElementById("problem").value.trim();
+        config.img = document.getElementById("linkImg").value.trim();
+        config.size = document.getElementById("lsize").value;
+
+        if (!config.machine || !config.problem || !config.img) {
+            Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+            return;
+        }
+
+        Swal.fire('สำเร็จ', 'บันทึกข้อมูลแล้ว พร้อมส่งรายงาน', 'success');
+    }
+
+    // 3. สร้าง Flex Message Dynamic
+    function getFlexPayload() {
+        return [{
+            "type": "flex",
+            "altText": "⚠️ แจ้งซ่อม: " + config.machine,
+            "contents": {
+                "type": "bubble",
+                "size": "giga",
+                "header": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": "🛠️ รายงานแจ้งซ่อมใหม่",
+                            "weight": "bold",
+                            "color": "#FFFFFF",
+                            "size": "lg"
+                        }
+                    ],
+                    "backgroundColor": "#E63946"
+                },
+                "hero": {
+                    "type": "image",
+                    "url": config.img,
+                    "size": "full",
+                    "aspectMode": "cover",
+                    "aspectRatio": config.size
+                },
+                "body": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": "Machine ID: " + config.machine,
+                            "weight": "bold",
+                            "size": "xl",
+                            "margin": "md"
+                        },
+                        {
+                            "type": "separator",
+                            "margin": "md"
+                        },
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "margin": "lg",
+                            "spacing": "sm",
+                            "contents": [
+                                {
+                                    "type": "box",
+                                    "layout": "baseline",
+                                    "spacing": "sm",
+                                    "contents": [
+                                        {
+                                            "type": "text",
+                                            "text": "อาการ:",
+                                            "color": "#aaaaaa",
+                                            "size": "sm",
+                                            "flex": 1
+                                        },
+                                        {
+                                            "type": "text",
+                                            "text": config.problem,
+                                            "wrap": true,
+                                            "color": "#666666",
+                                            "size": "sm",
+                                            "flex": 4
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "footer": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "spacing": "sm",
+                    "contents": [
+                        {
+                            "type": "button",
+                            "style": "primary",
+                            "height": "sm",
+                            "action": {
+                                "type": "postback",
+                                "label": "รับงาน (Accept)",
+                                "data": "action=accept&id=" + config.machine,
+                                "displayText": "รับทราบรายการแจ้งซ่อม " + config.machine
+                            },
+                            "color": "#1D3557"
+                        }
+                    ]
+                }
+            }
+        }];
+    }
+
+    // 4. ส่งข้อมูลให้เพื่อนหรือกลุ่ม
+    async function shareTargetPicker() {
+        if (!config.machine) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากดบันทึกข้อมูลก่อนครับ', 'info');
+
+        try {
+            const res = await liff.shareTargetPicker(getFlexPayload());
+            if (res) {
+                Swal.fire({ title: 'ส่งรายงานสำเร็จ!', icon: 'success', timer: 1500, showConfirmButton: false })
+                    .then(() => liff.closeWindow());
+            }
+        } catch (err) {
+            Swal.fire('Error', 'ไม่สามารถส่งได้ กรุณาลองใหม่', 'error');
+        }
+    }
+
+    main();
+</script>
+
+</body>
+</html>
