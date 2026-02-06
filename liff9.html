@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My LIFF App</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <h1>สวัสดีครับ!</h1>
+    <p id="os">OS: </p>
+    <p id="language">Language: </p>
+    <p id="version">LIFF Version: </p>
+    <p id="isInClient">Is in LINE: </p>
+    <button id="btnLogOut" onclick="logOut()">Log Out</button>
+    <button id="btnClose" onclick="closeLIFF()">Close LIFF</button>
+
+    <script>
+        async function main() {
+            // ใส่ LIFF ID ของคุณที่นี่
+            await liff.init({ liffId: "1654802091-0yd1nOzG" })
+            
+            if (liff.isLoggedIn()) {
+                getUserProfile()
+            } else {
+                liff.login()
+            }
+        }
+
+        async function getUserProfile() {
+            const profile = await liff.getProfile()
+            document.getElementById("os").append(liff.getOS())
+            document.getElementById("language").append(liff.getLanguage())
+            document.getElementById("version").append(liff.getVersion())
+            document.getElementById("isInClient").append(liff.isInClient())
+        }
+
+        function logOut() {
+            liff.logout()
+            window.location.reload()
+        }
+
+        function closeLIFF() {
+            liff.closeWindow()
+        }
+
+        main()
+    </script>
+</body>
+</html>
