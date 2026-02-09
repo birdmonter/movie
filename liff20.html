@@ -3,78 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIFF Flex Sender</title>
+    <title>LINE LIFF Flex Sender Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2 { color: #00b900; }
-        textarea { width: 100%; height: 300px; border-radius: 8px; border: 1px solid #ddd; padding: 10px; font-family: monospace; font-size: 14px; box-sizing: border-box; }
-        .btn-group { margin-top: 15px; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
-        .btn-send { background-color: #00b900; color: white; }
-        .btn-send:hover { background-color: #009e00; }
-        .btn-logout { background-color: #ff4b4b; color: white; }
+        body { background-color: #f7f9fc; }
+        .liff-green { background-color: #00b900; }
+        .liff-green:hover { background-color: #009e00; }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-<div class="container">
-    <h2>Flex Message Sender</h2>
-    <p>วาง JSON จาก Flex Message Simulator ที่นี่:</p>
-    
-    <textarea id="flexJson" placeholder='{ "type": "bubble", "body": { ... } }'></textarea>
-
-    <div class="btn-group">
-        <button class="btn-send" onclick="sendFlex()">🚀 ส่งข้อความ (Send Message)</button>
-        <button class="btn-logout" onclick="liff.logout(); location.reload();">Log Out</button>
-    </div>
-</div>
-
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-<script>
-    async function main() {
-        try {
-            // ใส่ LIFF ID ของคุณที่นี่
-            await liff.init({ liffId: "1654802091-R75QobAB" });
-
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            }
-        } catch (err) {
-            console.error("LIFF Init Error:", err);
-        }
-    }
-
-    async function sendFlex() {
-        const jsonField = document.getElementById('flexJson').value;
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
+        <h2 class="text-2xl font-bold text-center mb-6 text-[#00b900]">Flex Message Sender</h2>
         
-        if (!jsonField) {
-            alert("กรุณาวาง JSON ก่อนครับ");
-            return;
-        }
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">หัวข้อการแจ้งเตือน (altText):</label>
+            <input type="text" id="altTextField" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" 
+                placeholder="เช่น คุณได้รับข้อมูลใหม่...">
+        </div>
 
-        try {
-            const flexContent = JSON.parse(jsonField);
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">วาง JSON จาก Flex Simulator:</label>
+            <textarea id="flexJson" 
+                class="w-full h-64 p-4 border border-gray-300 rounded-lg font-mono text-sm bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none"
+                placeholder='{ "type": "bubble", "body": { ... } }'></textarea>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <button onclick="sendFlex()" class="w-full py-3 liff-green text-white font-bold rounded-xl transition shadow-md">
+                💬 ส่งเข้าแชทนี้ (sendMessages)
+            </button>
             
-            await liff.sendMessages([
-                {
-                    type: "flex",
-                    altText: "ส่ง Flex Message ผ่าน LIFF",
-                    contents: flexContent
+            <button onclick="shareFlex()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md">
+                👥 ส่งให้เพื่อน/กลุ่ม (Share Target Picker)
+            </button>
+
+            <div class="flex gap-2 mt-4">
+                <button onclick="liff.logout(); location.reload();" class="flex-1 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm">
+                    Log Out
+                </button>
+                <button onclick="liff.closeWindow()" class="flex-1 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm">
+                    ปิดหน้านี้
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <script>
+        async function main() {
+            try {
+                // *** ใส่ LIFF ID ของคุณตรงนี้ ***
+                await liff.init({ liffId: "1654802091-R75QobAB" });
+
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                } else {
+                    console.log("LIFF Ready!");
                 }
-            ]);
-
-            alert("ส่งสำเร็จแล้ว!");
-            liff.closeWindow();
-        } catch (error) {
-            alert("เกิดข้อผิดพลาด: " + error.message);
-            console.error(error);
+            } catch (err) {
+                console.error("LIFF Initialization failed", err);
+            }
         }
-    }
 
-    main();
-</script>
+        // ฟังก์ชันดึงข้อมูลจากหน้าเว็บ
+        function getPayload() {
+            const jsonStr = document.getElementById('flexJson').value;
+            const altText = document.getElementById('altTextField').value || "คุณได้รับ Flex Message";
 
+            if (!jsonStr) {
+                alert("กรุณาวาง JSON ก่อนครับ");
+                return null;
+            }
+
+            try {
+                const contents = JSON.parse(jsonStr);
+                return {
+                    type: "flex",
+                    altText: altText,
+                    contents: contents
+                };
+            } catch (e) {
+                alert("JSON ไม่ถูกต้อง: " + e.message);
+                return null;
+            }
+        }
+
+        // 1. ส่งเข้าแชทที่กำลังคุยอยู่
+        async function sendFlex() {
+            const message = getPayload();
+            if (!message) return;
+
+            try {
+                await liff.sendMessages([message]);
+                alert("ส่งข้อความสำเร็จ!");
+            } catch (err) {
+                alert("ส่งไม่สำเร็จ (อาจเพราะไม่ได้เปิดในแอป LINE): " + err.message);
+            }
+        }
+
+        // 2. เลือกแชร์ให้เพื่อนหรือกลุ่ม
+        async function shareFlex() {
+            const message = getPayload();
+            if (!message) return;
+
+            if (liff.isApiAvailable('shareTargetPicker')) {
+                try {
+                    const result = await liff.shareTargetPicker([message]);
+                    if (result) {
+                        alert("แชร์สำเร็จ!");
+                    }
+                } catch (err) {
+                    alert("การแชร์ผิดพลาด: " + err.message);
+                }
+            } else {
+                alert("ฟีเจอร์ Share Target Picker ยังไม่ได้เปิดใช้งานใน Console");
+            }
+        }
+
+        main();
+    </script>
 </body>
 </html>
